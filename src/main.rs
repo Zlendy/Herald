@@ -12,7 +12,10 @@ qrc!(my_resource,
 fn main() {
     my_resource();
     qml_register_type::<implementation::Test>(cstr!("Rust"), 0, 1, cstr!("Test"));
+    qmetaobject::log::init_qt_to_rust();
+
     let mut engine = QmlEngine::new();
+    
     engine.load_file("qrc:/main.qml".into());
     engine.exec();
 }

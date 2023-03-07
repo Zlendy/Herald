@@ -6,3 +6,10 @@ edition = "2021"
 [dependencies]
 qmetaobject = "0.2.7"
 cstr = "0.2.11"
+dotenv = "0.15.0"
+tokio-tungstenite = { version = "0.18.0", features = ["native-tls"] }
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread", "io-std"] }
+native-tls = "0.2.11"
+futures-channel = "0.3.26"
+futures-util = "0.3.26"
+url = "2.3.1"

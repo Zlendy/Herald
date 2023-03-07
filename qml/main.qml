@@ -10,9 +10,13 @@ Window {
         // Set a property
         name: "world!"
     }
-    Text {
+    TextInput {
         anchors.centerIn: parent
         // Call a method
         text: test.compute_greetings("Hello")
+        Keys.onReturnPressed: {
+            text = test.compute_greetings(text)
+        }
+
     }
 }

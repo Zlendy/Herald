@@ -104,3 +104,5 @@ compile_commands.json
 *.out
 *.app
 
+
+.env
