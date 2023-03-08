@@ -1,3 +1,5 @@
-# GotifyRustop
+# Gotify Rustop
 
-https://vikunja.beauvoir.local/tasks/226
+## Requirements
+- docker
+- docker-buildx

@@ -1,0 +1,11 @@
+services:
+  gotify:
+    image: gotify/server-arm64
+    container_name: gotify
+    env_file:
+      - .env
+    ports:
+      - 127.0.0.1:80:80
+    volumes:
+      - "./data/gotify:/app/data"
+    restart: unless-stopped

@@ -1,0 +1,32 @@
+{
+    "build": {
+      "dockerfile": "docker/Dockerfile"
+    },
+    
+    "remoteUser": "dev",
+    "updateRemoteUserUID": true,
+
+    "remoteEnv": {
+      // "DISPLAY": "host.docker.internal:1"
+      "DISPLAY": ":1"
+    },
+    
+    "runArgs": [
+      // "--add-host",
+      // "host.docker.internal:host-gateway"
+      "--net=host" // xhost +local:docker
+    ],
+
+    "customizations": {
+      // Configure properties specific to VS Code.
+      "vscode": {
+        // Add the IDs of extensions you want installed when the container is created.
+        "extensions": [
+          "bungcip.better-toml",
+          "serayuzgur.crates",
+          "felgo.felgo",
+          "1YiB.rust-bundle"
+        ]
+      }
+    }
+  }
