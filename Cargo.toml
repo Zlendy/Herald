@@ -13,3 +13,6 @@ native-tls = "0.2.11"
 futures-channel = "0.3.26"
 futures-util = "0.3.26"
 url = "2.3.1"
+reqwest = { version = "0.11.14", features = ["json"] }
+serde_json = { version = "1.0.94", features = ["raw_value"] }
+lazy_static = "1.4.0"
