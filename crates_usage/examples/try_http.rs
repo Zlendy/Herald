@@ -59,7 +59,7 @@ async fn get_messages() -> Result<Value, Box<dyn std::error::Error>> {
 
 async fn get_message(id: i32) -> Result<Value, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new()
-        .get(format!("{}/application/{}/message", *GOTIFY, id))
+        .get(format!("{}/application/{id}/message", *GOTIFY))
         .header("X-Gotify-Key", env::var("TOKEN").unwrap());
 
     let resp = client.send()
