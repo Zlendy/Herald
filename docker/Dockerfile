@@ -5,7 +5,8 @@ ENV USER=dev USER_ID=1000 USER_GID=1000
 
 RUN apt-get update
 RUN apt-get install -y sudo nano
-RUN apt-get install -y qtbase5-dev qtbase5-dev-tools qtquickcontrols2-5-dev qtdeclarative5-dev qml-module-qtquick2 qml-module-qtquick-window2
+RUN apt-get install -y qtbase5-dev qtbase5-dev-tools qtquickcontrols2-5-dev qtdeclarative5-dev qml-module-qtquick2 qml-module-qtquick-window2 qml-module-qtquick-controls2
+RUN rustup component add clippy
 
 # Passwordless sudo
 ### INSECURE, DO NOT USE IN PRODUCTION ###
