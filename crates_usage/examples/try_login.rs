@@ -32,18 +32,18 @@ async fn main() {
         ).await.unwrap();
     println!("{:#?}", &client);
 
-    let token = &client["token"];
-    println!("{}", &token);
+    let token = &client["token"].as_str().unwrap();
+    println!("Value: \"{}\"", token);
 
 
     println!("\n-- Get current user --");
-    let current_user = get_current_user(&token.to_string()).await.unwrap();
+    let current_user = get_current_user(token).await.unwrap();
     println!("{:#?}", &current_user);
 
     
     println!("\n-- Delete client --");
     let response = delete_client(
-            &token.to_string(),
+            token,
             from_value::<i32>(client["id"].clone()).unwrap(),
         ).await.unwrap();
     println!("{:#?}", &response);
