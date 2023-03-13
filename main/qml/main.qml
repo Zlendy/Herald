@@ -6,12 +6,13 @@
 
 // ANCHOR: book_main_qml
 import QtQuick 2.12
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.12 as Controls
 import QtQuick.Window 2.12
+import org.kde.kirigami 2.20 as Kirigami
 
 import Rust.Test 0.1
 
-Window {
+Kirigami.ApplicationWindow {
     height: 480
     title: qsTr("Gotify Rustop")
     visible: true
@@ -28,22 +29,22 @@ Window {
         anchors.margins: 10
         spacing: 10
 
-        Label {
+        Controls.Label {
             text: "Number: " + gotifyRustop.number
         }
 
-        Label {
+        Controls.Label {
             text: "String: " + gotifyRustop.string
         }
 
-        Button {
-            text: "number++"
+        Controls.Button {
+            text: qsTr("number++")
 
             onClicked: gotifyRustop.incrementNumber()
         }
 
-        Button {
-            text: "println!()"
+        Controls.Button {
+            text: qsTr("println!()")
 
             onClicked: gotifyRustop.print(gotifyRustop.string, gotifyRustop.number)
         }

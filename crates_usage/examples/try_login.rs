@@ -32,7 +32,7 @@ async fn main() {
         ).await.unwrap();
     println!("{:#?}", &client);
 
-    let token = &client["token"].as_str().unwrap();
+    let token = client["token"].as_str().unwrap();
     println!("Value: \"{}\"", token);
 
 
