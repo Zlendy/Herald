@@ -1,4 +1,3 @@
-// SPDX-FileCopyrightText: 2022 Klarälvdalens Datakonsult AB, a KDAB Group company <info@kdab.com>
 use cxx_qt_build::CxxQtBuilder;
 
 fn main() {
