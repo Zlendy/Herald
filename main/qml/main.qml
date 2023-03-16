@@ -56,6 +56,7 @@ Kirigami.ApplicationWindow {
                 id: password
                 Kirigami.FormData.label: "Password:"
                 text: rust.password
+                echoMode: TextInput.Password
             }
 
             Button {
