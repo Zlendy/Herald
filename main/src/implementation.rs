@@ -1,8 +1,5 @@
-// use reqwest::Response;
 use serde_derive::{Serialize, Deserialize};
 use serde_json::Value;
-// use serde_json::value::from_value;
-// use async_trait::async_trait;
 
 const GOTIFY: &str = "https://monitoring.beauvoir.local/gotify";
 

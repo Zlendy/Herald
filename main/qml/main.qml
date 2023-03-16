@@ -16,21 +16,6 @@ Kirigami.ApplicationWindow {
 
     GotifyRustop {
         id: rust
-
-        // username: ""
-        // password: ""
-    }
-
-    Binding {
-        target: rust
-        property: "username"
-        value: username.text
-    }
-
-    Binding {
-        target: rust
-        property: "password"
-        value: password.text
     }
 
     ColumnLayout {
@@ -50,6 +35,7 @@ Kirigami.ApplicationWindow {
                 id: username
                 Kirigami.FormData.label: "Username:"
                 text: rust.username
+                onTextChanged: rust.username = text // Binding
             }
 
             TextField {
@@ -57,6 +43,7 @@ Kirigami.ApplicationWindow {
                 Kirigami.FormData.label: "Password:"
                 text: rust.password
                 echoMode: TextInput.Password
+                onTextChanged: rust.password = text // Binding
             }
 
             Button {
@@ -70,4 +57,3 @@ Kirigami.ApplicationWindow {
     }
 
 }
-// ANCHOR_END: book_main_qml
