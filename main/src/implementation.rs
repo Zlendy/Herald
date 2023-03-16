@@ -18,6 +18,8 @@ mod gotify_rustop {
         username: QString,
         #[qproperty]
         password: QString,
+        #[qproperty]
+        result: QString,
     }
 
     impl Default for GotifyRustop {
@@ -25,6 +27,7 @@ mod gotify_rustop {
             Self {
                 username: QString::from(""),
                 password: QString::from(""),
+                result: QString::from("N/A"),
             }
         }
     }
@@ -58,9 +61,25 @@ mod gotify_rustop {
             println!("Password: \"{password}\"");
 
             // Asynchronous operation
+            let qt_thread = self.qt_thread(); // TODO: Attempt to remove
+
             tokio::spawn(async move {
+                // Async task (backend)
                 let response = GotifyRustop::create_client(username.as_str(), password.as_str()).await.unwrap();
                 println!("{:#?}", &response);
+
+                match response.get("token").cloned() {
+                    Some(token) => {
+                        // Send result to frontend
+                        let _result = qt_thread.queue(move |mut qobject| {
+                            qobject.as_mut().set_result(QString::from(token.as_str().unwrap()));
+                            println!("{}", token);
+                        });
+                    },
+                    None => {
+                        println!("Invalid credentials")
+                    }
+                }
             });
         }
     }

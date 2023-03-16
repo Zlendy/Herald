@@ -52,6 +52,17 @@ Kirigami.ApplicationWindow {
                 onClicked: rust.login()
             }
 
+            Kirigami.Separator {
+                Kirigami.FormData.isSection: true
+                Kirigami.FormData.label: "Result"
+            }
+
+            Label {
+                id: result
+                text: rust.result
+                width: formLayout.width
+            }
+
         }
 
     }
