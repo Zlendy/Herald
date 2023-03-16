@@ -53,27 +53,18 @@ mod gotify_rustop {
     impl qobject::GotifyRustop {
         #[qinvokable]
         pub fn login(&self) {
+            // Synchronous operation
             let username = self.rust().username.to_string();
             let password = self.rust().password.to_string();
 
             println!("Username: \"{username}\"");
             println!("Password: \"{password}\"");
 
-            // Create a new Qt Thread and await the response from tokio in there.
-            // TODO: OPTIMIZE
-            let qt_thread = self.qt_thread();
-            qt_thread
-                .queue(move |mut qobject| {                    
-                    tokio::runtime::Builder::new_multi_thread()
-                        .enable_all()
-                        .build()
-                        .unwrap()
-                        .block_on(async {
-                            let response = GotifyRustop::create_client(username.as_str(), password.as_str()).await.unwrap();
-                            println!("{:#?}", &response);
-                        });
-                })
-                .unwrap();
+            // Asynchronous operation
+            tokio::spawn(async move {
+                let response = GotifyRustop::create_client(username.as_str(), password.as_str()).await.unwrap();
+                println!("{:#?}", &response);
+            });
         }
     }
 }
