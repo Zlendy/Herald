@@ -3,6 +3,8 @@ use serde_json::Value;
 
 const GOTIFY: &str = "https://monitoring.beauvoir.local/gotify";
 
+// TODO: Remove CXX-Qt dependency
+
 #[cxx_qt::bridge]
 mod gotify_rustop {
     use super::*;

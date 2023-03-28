@@ -4,13 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cxx = "1.0.92"
-cxx-qt = "0.5.0"
-cxx-qt-lib = "0.5.0"
-cstr = "0.2.11"
 dotenv = "0.15.0"
 tokio-tungstenite = { version = "0.18.0", features = ["native-tls"] }
-tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread", "io-std"] }
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread", "io-std", "time"] }
 native-tls = "0.2.11"
 futures-channel = "0.3.26"
 futures-util = "0.3.26"
@@ -21,7 +17,6 @@ lazy_static = "1.4.0"
 serde = "1.0.154"
 serde_derive = "1.0.154"
 async-trait = "0.1.66"
-
-[build-dependencies]
-cxx-qt-build = "0.5.0"
-qt-build-utils = "0.5.0"
+rand = "0.8.5"
+relm4 = { version ="0.5.1", features = ["libadwaita"] }
+libadwaita = { version = "0.2.1", features = ["v1_2"] }

@@ -1,3 +1,0 @@
-[env]
-QT_VERSION_MAJOR = "5" # Use Qt5 instead of Qt6
-QT_QUICK_CONTROLS_STYLE = "org.kde.desktop" # Use Breeze theme
