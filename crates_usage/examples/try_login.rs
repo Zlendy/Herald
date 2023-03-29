@@ -1,11 +1,11 @@
+use dotenv::dotenv;
 use std::env;
 use std::io::stdin;
-use dotenv::dotenv;
 
 use reqwest::Response;
-use serde_derive::{Serialize, Deserialize};
-use serde_json::Value;
+use serde_derive::{Deserialize, Serialize};
 use serde_json::value::from_value;
+use serde_json::Value;
 
 use lazy_static::lazy_static;
 
@@ -16,7 +16,7 @@ lazy_static! {
 #[tokio::main]
 async fn main() {
     dotenv().ok(); // Load env variables in .env
-    
+
     println!("-- Create client --");
     let mut username = String::new();
     println!("Username: ");
@@ -26,26 +26,22 @@ async fn main() {
     println!("Password: ");
     stdin().read_line(&mut password).unwrap();
 
-    let client = create_client(
-            username.as_str().trim(),
-            password.as_str().trim(),
-        ).await.unwrap();
+    let client = create_client(username.as_str().trim(), password.as_str().trim())
+        .await
+        .unwrap();
     println!("{:#?}", &client);
 
     let token = client["token"].as_str().unwrap();
     println!("Value: \"{}\"", token);
 
-
     println!("\n-- Get current user --");
     let current_user = get_current_user(token).await.unwrap();
     println!("{:#?}", &current_user);
 
-    
     println!("\n-- Delete client --");
-    let response = delete_client(
-            token,
-            from_value::<i32>(client["id"].clone()).unwrap(),
-        ).await.unwrap();
+    let response = delete_client(token, from_value::<i32>(client["id"].clone()).unwrap())
+        .await
+        .unwrap();
     println!("{:#?}", &response);
 }
 
@@ -66,7 +62,10 @@ impl ClientModel {
     }
 }
 
-async fn create_client(username: &str, password: &str) -> Result<Value, Box<dyn std::error::Error>> {   
+async fn create_client(
+    username: &str,
+    password: &str,
+) -> Result<Value, Box<dyn std::error::Error>> {
     let body = ClientModel::new("Gotify Rustop");
 
     let client = reqwest::Client::new()
@@ -74,10 +73,7 @@ async fn create_client(username: &str, password: &str) -> Result<Value, Box<dyn 
         .basic_auth(username, Some(password))
         .json::<ClientModel>(&body);
 
-    let resp = client.send()
-        .await?
-        .json::<Value>()
-        .await?;
+    let resp = client.send().await?.json::<Value>().await?;
 
     Ok(resp)
 }
@@ -87,10 +83,7 @@ async fn get_current_user(token: &str) -> Result<Value, Box<dyn std::error::Erro
         .get(format!("{}/current/user", *GOTIFY))
         .header("X-Gotify-Key", token);
 
-    let resp = client.send()
-        .await?
-        .json::<Value>()
-        .await?;
+    let resp = client.send().await?.json::<Value>().await?;
 
     Ok(resp)
 }

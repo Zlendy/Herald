@@ -1,8 +1,8 @@
-use std::env;
 use dotenv::dotenv;
+use std::env;
 
-use serde_json::Value;
 use serde_json::value::from_value;
+use serde_json::Value;
 
 use lazy_static::lazy_static;
 
@@ -21,11 +21,11 @@ async fn main() {
     println!("\n-- Message list --");
     let messages = get_messages().await.unwrap();
     println!("{:#?}", &messages);
-    
+
     println!("\n-- Message list from third application --");
-    let message = get_message(
-            from_value::<i32>(apps[2]["id"].clone()
-        ).unwrap()).await.unwrap();
+    let message = get_message(from_value::<i32>(apps[2]["id"].clone()).unwrap())
+        .await
+        .unwrap();
     println!("{:#?}", &message);
 }
 
@@ -36,10 +36,7 @@ async fn get_applications() -> Result<Value, Box<dyn std::error::Error>> {
         .get(format!("{}/application", *GOTIFY))
         .header("X-Gotify-Key", env::var("TOKEN").unwrap());
 
-    let resp = client.send()
-        .await?
-        .json::<Value>()
-        .await?;
+    let resp = client.send().await?.json::<Value>().await?;
 
     Ok(resp)
 }
@@ -49,10 +46,7 @@ async fn get_messages() -> Result<Value, Box<dyn std::error::Error>> {
         .get(format!("{}/message", *GOTIFY))
         .header("X-Gotify-Key", env::var("TOKEN").unwrap());
 
-    let resp = client.send()
-        .await?
-        .json::<Value>()
-        .await?;
+    let resp = client.send().await?.json::<Value>().await?;
 
     Ok(resp)
 }
@@ -62,10 +56,7 @@ async fn get_message(id: i32) -> Result<Value, Box<dyn std::error::Error>> {
         .get(format!("{}/application/{id}/message", *GOTIFY))
         .header("X-Gotify-Key", env::var("TOKEN").unwrap());
 
-    let resp = client.send()
-        .await?
-        .json::<Value>()
-        .await?;
+    let resp = client.send().await?.json::<Value>().await?;
 
     Ok(resp)
 }
