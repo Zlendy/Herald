@@ -1,4 +1,4 @@
-# Gotify Rustop
+# Herald
 
 ## Requirements
 - docker

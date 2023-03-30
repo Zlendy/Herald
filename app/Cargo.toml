@@ -1,12 +1,12 @@
 [package]
-name = "crates_usage"
-version = "1.0.0"
+name = "app"
+version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 dotenv = "0.15.0"
 tokio-tungstenite = { version = "0.18.0", features = ["native-tls"] }
-tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread", "io-std"] }
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread", "io-std", "time"] }
 native-tls = "0.2.11"
 futures-channel = "0.3.26"
 futures-util = "0.3.26"
@@ -16,3 +16,10 @@ serde_json = { version = "1.0.94", features = ["raw_value"] }
 lazy_static = "1.4.0"
 serde = "1.0.154"
 serde_derive = "1.0.154"
+async-trait = "0.1.66"
+rand = "0.8.5"
+relm4 = { version ="0.5.1", features = ["libadwaita"] }
+libadwaita = { version = "0.2.1", features = ["v1_2"] }
+log = "0.4.17"
+env_logger = "0.10.0"
+tracker = "0.2.1"
