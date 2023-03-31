@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=herald
+Exec=herald
+Icon=io.github.zlendy.herald
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true

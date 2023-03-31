@@ -14,7 +14,7 @@ use relm4::{
 use serde_derive::{Serialize, Deserialize};
 use serde_json::Value;
 
-const GOTIFY: &str = "https://monitoring.beauvoir.local/gotify";
+const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
 
 struct App {
     #[allow(dead_code)]
@@ -161,7 +161,7 @@ impl AsyncComponent for App {
 
             match response.get("token").cloned() { // TODO: Fix extra brackets
                 Some(token) => {
-                    println!("{}", token);
+                    log::info!("{}", token);
                     self.token = token.to_string();
                 },
                 None => {
@@ -206,7 +206,7 @@ impl AsyncComponent for App {
             .bind_property("folded", &widgets.sidebar_header, "show-end-title-buttons")
             .flags(glib::BindingFlags::SYNC_CREATE)
             .build();
-        
+
         widgets
             .leaflet
             .bind_property(
@@ -232,19 +232,19 @@ impl AsyncComponent for App {
 }
 
 impl App {
-    pub async fn create_client(username: &str, password: &str) -> Result<Value, Box<dyn std::error::Error>> {   
-        let body: ClientModel = ClientModel::new("Gotify Rustop");
-    
+    pub async fn create_client(username: &str, password: &str) -> Result<Value, Box<dyn std::error::Error>> {
+        let body: ClientModel = ClientModel::new("Herald");
+
         let client = reqwest::Client::new()
             .post(format!("{}/client", GOTIFY))
             .basic_auth(username, Some(password))
             .json::<ClientModel>(&body);
-    
+
         let resp = client.send()
             .await?
             .json::<Value>()
             .await?;
-    
+
         Ok(resp)
     }
 }
@@ -270,6 +270,6 @@ impl ClientModel {
 fn main() {
     env_logger::init();
 
-    let app = RelmApp::new("relm4.example.leafletSidebar");
+    let app = RelmApp::new("io.github.zlendy.herald");
     app.run_async::<App>(());
 }

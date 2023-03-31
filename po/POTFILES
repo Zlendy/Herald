@@ -1,0 +1,4 @@
+data/io.github.zlendy.herald.desktop.in
+data/io.github.zlendy.herald.appdata.xml.in
+data/io.github.zlendy.herald.gschema.xml
+src/window.ui
