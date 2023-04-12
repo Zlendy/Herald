@@ -1,21 +1,19 @@
-/// Responsive sidebar layout inspired by the example code in the [libadwaita documentation].
-///
-/// Shrink the window small enough to see the sidebar and content pages become folded.
-///
-/// [libadwaita documentation]: https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/adaptive-layouts.html#leaflet
-
 mod views;
+
+use views::login::widget::LoginView as Login;
 
 use relm4::adw;
 use gtk::prelude::*;
-use relm4::component::AsyncComponentController;
+use relm4::component::{AsyncComponentController, AsyncConnector};
 
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
     gtk, RelmApp,
 };
 
-struct App {}
+struct App {
+    login: AsyncConnector<Login>,
+}
 
 #[relm4::component(async)]
 impl AsyncComponent for App {
@@ -67,7 +65,11 @@ impl AsyncComponent for App {
         root: Self::Root,
         _sender: AsyncComponentSender<Self>
     ) -> AsyncComponentParts<Self> {
-        let model = App {};
+        let login = views::login::widget::LoginView::builder().launch(());
+
+        let model = App {
+            login,
+        };
         let widgets = view_output!();
 
         // widgets
@@ -92,11 +94,9 @@ impl AsyncComponent for App {
         //     .flags(glib::BindingFlags::SYNC_CREATE)
         //     .build();
 
-        let login = views::login::widget::LoginView::builder().launch(());
-
         widgets
             .stack
-            .add_titled(login.widget(), Some("login"), &"Login");
+            .add_titled(model.login.widget(), Some("login"), &"Login");
 
         widgets
             .stack

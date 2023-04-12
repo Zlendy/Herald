@@ -39,6 +39,7 @@ impl AsyncComponent for LoginView {
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
+                set_vexpand: true,
 
                 gtk::ListBox {
                     set_selection_mode: gtk::SelectionMode::Single,
@@ -65,13 +66,8 @@ impl AsyncComponent for LoginView {
             },
 
             gtk::Box {
-                // gtk::Label {
-                //     add_css_class: "title-1",
-                //     set_vexpand: true,
-
-                //     #[watch]
-                //     set_text: &format!("Page {}", model.current_section),
-                // }
+                set_orientation: gtk::Orientation::Vertical,
+                set_hexpand: true,
 
                 adw::EntryRow {
                     set_title: "Username",
