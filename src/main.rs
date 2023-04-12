@@ -96,11 +96,11 @@ impl AsyncComponent for App {
 
         widgets
             .stack
-            .add_titled(model.login.widget(), Some("login"), &"Login");
+            .add_titled_with_icon(model.login.widget(), Some("login"), &"Login", &"go-home-symbolic");
 
         widgets
             .stack
-            .add_titled(&gtk::Label::new(Some("Test 2")), Some("test2"), &"Test 2");
+            .add_titled_with_icon(&gtk::Label::new(Some("Test 2")), Some("test2"), &"Test 2", &"go-home-symbolic");
 
         widgets
             .switcher_bar
