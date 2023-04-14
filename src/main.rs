@@ -1,6 +1,7 @@
 mod views;
 
 use views::login::widget::LoginView as Login;
+use views::messages::widget::MessagesView as Message;
 
 use relm4::adw;
 use gtk::prelude::*;
@@ -13,6 +14,7 @@ use relm4::{
 
 struct App {
     login: AsyncConnector<Login>,
+    messages: AsyncConnector<Message>,
 }
 
 #[relm4::component(async)]
@@ -66,9 +68,11 @@ impl AsyncComponent for App {
         _sender: AsyncComponentSender<Self>
     ) -> AsyncComponentParts<Self> {
         let login = views::login::widget::LoginView::builder().launch(());
+        let messages = views::messages::widget::MessagesView::builder().launch(());
 
         let model = App {
             login,
+            messages,
         };
         let widgets = view_output!();
 
@@ -100,7 +104,7 @@ impl AsyncComponent for App {
 
         widgets
             .stack
-            .add_titled_with_icon(&gtk::Label::new(Some("Test 2")), Some("test2"), &"Test 2", &"go-home-symbolic");
+            .add_titled_with_icon(model.messages.widget(), Some("messages"), &"Messages", &"go-home-symbolic");
 
         widgets
             .switcher_bar
@@ -115,6 +119,14 @@ impl AsyncComponent for App {
             .bind_property("title-visible", &widgets.switcher_bar, "reveal")
             .flags(gtk::glib::BindingFlags::SYNC_CREATE)
             .build();
+
+        // widgets
+        //     .stack
+        //     .set_visible_child_name("messages");
+
+        // widgets
+        //     .stack
+        //     .remove(model.messages.widget());
 
         AsyncComponentParts { model, widgets }
     }

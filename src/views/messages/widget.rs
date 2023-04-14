@@ -10,7 +10,7 @@ use serde_json::Value;
 
 const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
 
-pub struct LoginView {
+pub struct MessagesView {
     #[allow(dead_code)]
     current_section: u32, // Unused for now
     username: String,
@@ -19,70 +19,75 @@ pub struct LoginView {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum LoginViewMsg {
+pub enum MessageType {
     Login,
     SetUsername(String),
     SetPassword(String),
 }
 
 #[relm4::component(pub async)]
-impl AsyncComponent for LoginView {
+impl AsyncComponent for MessagesView {
     type Init = ();
-    type Input = LoginViewMsg;
+    type Input = MessageType;
     type Output = ();
-    type CommandOutput = LoginViewMsg;
+    type CommandOutput = MessageType;
 
     view! {
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-            set_hexpand: true,
+        #[name = "leaflet"]
+        adw::Leaflet {
+            set_can_navigate_back: true,
 
-            adw::EntryRow {
-                set_title: "Username",
-                connect_changed[sender] => move |entry| {
-                    let text = entry.text().to_string();
-                    sender.input(LoginViewMsg::SetUsername(text));
-                },
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
+                set_vexpand: true,
+
+                gtk::ListBox {
+                    set_selection_mode: gtk::SelectionMode::Single,
+                    add_css_class: "navigation-sidebar",
+
+                    adw::ActionRow {
+                        set_title: "App 1",
+                    },
+
+                    adw::ActionRow {
+                        set_title: "App 2",
+                    },
+
+                    adw::ActionRow {
+                        set_title: "App 3",
+                    },
+
+                    // connect_row_selected[sender] => move |_, row| {
+                    //     if let Some(row) = row {
+                    //         sender.input((row.index() + 1) as u32);
+                    //     }
+                    // }
+                }
             },
 
-            adw::PasswordEntryRow {
-                set_title: "Password",
-                connect_changed[sender] => move |entry| {
-                    let text = entry.text().to_string();
-                    sender.input(LoginViewMsg::SetPassword(text));
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
+                set_hexpand: true,
+
+                gtk::Label {
+                    set_margin_all: 5,
+                    set_label: "TODO: Add message list",
                 },
-            },
-
-            gtk::Button {
-                set_label: "Login",
-
-                connect_clicked[sender] => move |_| {
-                    sender.oneshot_command(async move {
-                        LoginViewMsg::Login
-                    })
-                },
-            },
-
-
-            gtk::Label {
-                set_margin_all: 5,
-                #[watch]
-                set_label: &format!("Token: \"{}\"", model.token),
             },
         }
     }
 
     async fn update_cmd(
         &mut self,
-        msg: LoginViewMsg,
+        msg: MessageType,
         _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        if msg != LoginViewMsg::Login { return; } // Only process "Login" events
+        if msg != MessageType::Login { return; } // Only process "Login" events
 
 
         log::info!("Username: \"{}\". Password: \"{}\"", &self.username, &self.password);
-        let response = LoginView::create_client(&self.username.as_str(), &self.password.as_str()).await.unwrap();
+        let response = MessagesView::create_client(&self.username.as_str(), &self.password.as_str()).await.unwrap();
             log::info!("{:#?}", &response);
 
             match response.get("token").cloned() { // TODO: Fix extra brackets
@@ -98,15 +103,15 @@ impl AsyncComponent for LoginView {
 
     async fn update(
         &mut self,
-        msg: LoginViewMsg,
+        msg: MessageType,
         _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
-            LoginViewMsg::SetUsername(username) => {
+            MessageType::SetUsername(username) => {
                 self.username = username;
             },
-            LoginViewMsg::SetPassword(password) => {
+            MessageType::SetPassword(password) => {
                 self.password = password;
             },
             _ => {}
@@ -116,9 +121,9 @@ impl AsyncComponent for LoginView {
     async fn init(
         _init: Self::Init,
         root: Self::Root,
-        sender: AsyncComponentSender<Self>
+        _sender: AsyncComponentSender<Self>
     ) -> AsyncComponentParts<Self> {
-        let model = LoginView {
+        let model = MessagesView {
             current_section: 1,
             username: String::from(""),
             password: String::from(""),
@@ -135,7 +140,7 @@ impl AsyncComponent for LoginView {
     }
 }
 
-impl LoginView {
+impl MessagesView {
     pub async fn create_client(username: &str, password: &str) -> Result<Value, Box<dyn std::error::Error>> {
         let body: ClientModel = ClientModel::new("Herald");
 
