@@ -1,9 +1,12 @@
 mod views;
 
+use relm4::actions::{RelmActionGroup, RelmAction, ActionGroupName};
+use views::about_dialog::AboutDialog;
+use relm4::ComponentController;
 use views::login::widget::LoginView as Login;
 use views::messages::widget::MessagesView as Message;
 
-use relm4::adw;
+use relm4::{adw, Controller, ComponentBuilder};
 use gtk::prelude::*;
 use relm4::component::{AsyncComponentController, AsyncConnector};
 
@@ -15,6 +18,7 @@ use relm4::{
 struct App {
     login: AsyncConnector<Login>,
     messages: AsyncConnector<Message>,
+    about_dialog: Option<Controller<AboutDialog>>
 }
 
 #[relm4::component(async)]
@@ -25,6 +29,7 @@ impl AsyncComponent for App {
     type CommandOutput = ();
 
     view! {
+        #[name = "main_window"]
         adw::Window {
             set_default_size: (800, 300),
 
@@ -48,7 +53,17 @@ impl AsyncComponent for App {
                     set_title_widget = &adw::ViewSwitcherTitle {
                         set_title: "Herald",
                         // set_view_switcher_enabled: true,
-                    }
+                    },
+
+                    #[name = "menu"]
+                    pack_end = &gtk::MenuButton {
+                        set_icon_name: "open-menu-symbolic",
+                        
+                        #[wrap(Some)]
+                        set_popover = &gtk::PopoverMenu::from_model(Some(&main_menu)) {
+                            // add_child: (&popover_child, "my_widget"),
+                        }
+                    },
                 },
 
                 #[name = "stack"]
@@ -58,7 +73,45 @@ impl AsyncComponent for App {
                 adw::ViewSwitcherBar {
                     // set_reveal: true,
                 },
+
+                // #[name = "popover_child"]
+                // gtk::Spinner {
+                //     set_spinning: true,
+                // }
             }
+        }
+    }
+
+    menu! {
+        main_menu: {
+            custom: "my_widget",
+            "About Herald" => AboutAction,
+            // "Example2" => AboutAction,
+            // "Example toggle" => ExampleU8Action(1_u8),
+            // section! {
+            //     "Section example" => AboutAction,
+            //     "Example toggle" => ExampleU8Action(1_u8),
+            // },
+            // section! {
+            //     "Example" => AboutAction,
+            //     "Example2" => AboutAction,
+            //     "Example Value" => ExampleU8Action(1_u8),
+            // },
+            // "submenu1" {
+            //     "Example" => AboutAction,
+            //     "Example2" => AboutAction,
+            //     "Example toggle" => ExampleU8Action(1_u8),
+            //     "submenu2" {
+            //         "Example" => AboutAction,
+            //         "Example2" => AboutAction,
+            //         "Example toggle" => ExampleU8Action(1_u8),
+            //         "submenu3" {
+            //             "Example" => AboutAction,
+            //             "Example2" => AboutAction,
+            //             "Example toggle" => ExampleU8Action(1_u8),
+            //         }
+            //     }
+            // }
         }
     }
 
@@ -70,11 +123,13 @@ impl AsyncComponent for App {
         let login = views::login::widget::LoginView::builder().launch(());
         let messages = views::messages::widget::MessagesView::builder().launch(());
 
-        let model = App {
+        let mut model = App {
             login,
             messages,
+            about_dialog: None,
         };
-        let widgets = view_output!();
+
+        let widgets: AppWidgets = view_output!();
 
         // widgets
         //     .leaflet
@@ -97,6 +152,24 @@ impl AsyncComponent for App {
         //     .bind_property("folded", &widgets.back_button, "visible")
         //     .flags(glib::BindingFlags::SYNC_CREATE)
         //     .build();
+
+        let actions = RelmActionGroup::<WindowActionGroup>::new();
+
+        let about_dialog = ComponentBuilder::default()
+			.launch(widgets.main_window.upcast_ref::<gtk::Window>().clone())
+			.detach();
+        model.about_dialog = Some(about_dialog);
+
+        let about_action = {
+            let sender = model.about_dialog.as_ref().unwrap().sender().clone();
+			RelmAction::<AboutAction>::new_stateless(move |_| {
+				sender.send(()).unwrap_or_default();
+			})
+        };
+        
+        actions.add_action(&about_action);
+        // widgets.main_window.set_accelerators_for_action::<ExampleAction>(&["<Control>q"]);
+        // widgets.main_window.set_action_group(Some(&actions.into_action_group()));
 
         widgets
             .stack
@@ -128,9 +201,18 @@ impl AsyncComponent for App {
         //     .stack
         //     .remove(model.messages.widget());
 
+        widgets.main_window.insert_action_group(
+			WindowActionGroup::NAME,
+			Some(&actions.into_action_group()),
+		);
+
         AsyncComponentParts { model, widgets }
     }
 }
+
+relm4::new_action_group!(WindowActionGroup, "win");
+relm4::new_stateless_action!(AboutAction, WindowActionGroup, "about");
+relm4::new_stateful_action!(ExampleU8Action, WindowActionGroup, "example2", u8, u8);
 
 fn main() {
     env_logger::init();
