@@ -3,11 +3,11 @@ use adw::traits::PreferencesRowExt;
 use gtk::prelude::*;
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
-    gtk, RelmWidgetExt,
+    gtk,
 };
-use crate::views::factory_async::MessageFactory;
+use crate::widgets::factory_async::MessageFactory;
 
-pub struct MessagesView {
+pub struct MessageContainerWidget {
     #[allow(dead_code)]
     current_section: u32, // Unused for now
     factory: Connector<MessageFactory>,
@@ -17,7 +17,7 @@ pub struct MessagesView {
 pub enum MessageType {}
 
 #[relm4::component(pub async)]
-impl AsyncComponent for MessagesView {
+impl AsyncComponent for MessageContainerWidget {
     type Init = ();
     type Input = MessageType;
     type Output = ();
@@ -89,7 +89,7 @@ impl AsyncComponent for MessagesView {
     ) -> AsyncComponentParts<Self> {
         let factory = MessageFactory::builder().launch(0);
 
-        let model = MessagesView {
+        let model = MessageContainerWidget {
             current_section: 1,
             factory,
         };

@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, OrientableExt, WidgetExt};
+use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
 };
 use relm4::loading_widgets::LoadingWidgets;
-use relm4::{gtk, view, ComponentParts, ComponentSender, RelmApp, RelmWidgetExt, SimpleComponent};
+use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
 
 #[derive(Debug)]
 struct Counter {

@@ -10,7 +10,7 @@ use serde_json::Value;
 
 const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
 
-pub struct LoginView {
+pub struct LoginWidget {
     #[allow(dead_code)]
     current_section: u32, // Unused for now
     username: String,
@@ -19,18 +19,18 @@ pub struct LoginView {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum LoginViewMsg {
+pub enum LoginMsg {
     Login,
     SetUsername(String),
     SetPassword(String),
 }
 
 #[relm4::component(pub async)]
-impl AsyncComponent for LoginView {
+impl AsyncComponent for LoginWidget {
     type Init = ();
-    type Input = LoginViewMsg;
+    type Input = LoginMsg;
     type Output = ();
-    type CommandOutput = LoginViewMsg;
+    type CommandOutput = LoginMsg;
 
     view! {
         gtk::Box {
@@ -41,7 +41,7 @@ impl AsyncComponent for LoginView {
                 set_title: "Username",
                 connect_changed[sender] => move |entry| {
                     let text = entry.text().to_string();
-                    sender.input(LoginViewMsg::SetUsername(text));
+                    sender.input(LoginMsg::SetUsername(text));
                 },
             },
 
@@ -49,7 +49,7 @@ impl AsyncComponent for LoginView {
                 set_title: "Password",
                 connect_changed[sender] => move |entry| {
                     let text = entry.text().to_string();
-                    sender.input(LoginViewMsg::SetPassword(text));
+                    sender.input(LoginMsg::SetPassword(text));
                 },
             },
 
@@ -58,7 +58,7 @@ impl AsyncComponent for LoginView {
 
                 connect_clicked[sender] => move |_| {
                     sender.oneshot_command(async move {
-                        LoginViewMsg::Login
+                        LoginMsg::Login
                     })
                 },
             },
@@ -74,15 +74,15 @@ impl AsyncComponent for LoginView {
 
     async fn update_cmd(
         &mut self,
-        msg: LoginViewMsg,
+        msg: LoginMsg,
         _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        if msg != LoginViewMsg::Login { return; } // Only process "Login" events
+        if msg != LoginMsg::Login { return; } // Only process "Login" events
 
 
         log::info!("Username: \"{}\". Password: \"{}\"", &self.username, &self.password);
-        let response = LoginView::create_client(&self.username.as_str(), &self.password.as_str()).await.unwrap();
+        let response = LoginWidget::create_client(&self.username.as_str(), &self.password.as_str()).await.unwrap();
             log::info!("{:#?}", &response);
 
             match response.get("token").cloned() { // TODO: Fix extra brackets
@@ -98,15 +98,15 @@ impl AsyncComponent for LoginView {
 
     async fn update(
         &mut self,
-        msg: LoginViewMsg,
+        msg: LoginMsg,
         _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
-            LoginViewMsg::SetUsername(username) => {
+            LoginMsg::SetUsername(username) => {
                 self.username = username;
             },
-            LoginViewMsg::SetPassword(password) => {
+            LoginMsg::SetPassword(password) => {
                 self.password = password;
             },
             _ => {}
@@ -118,7 +118,7 @@ impl AsyncComponent for LoginView {
         root: Self::Root,
         sender: AsyncComponentSender<Self>
     ) -> AsyncComponentParts<Self> {
-        let model = LoginView {
+        let model = LoginWidget {
             current_section: 1,
             username: String::from(""),
             password: String::from(""),
@@ -135,7 +135,7 @@ impl AsyncComponent for LoginView {
     }
 }
 
-impl LoginView {
+impl LoginWidget {
     pub async fn create_client(username: &str, password: &str) -> Result<Value, Box<dyn std::error::Error>> {
         let body: ClientModel = ClientModel::new("Herald");
 

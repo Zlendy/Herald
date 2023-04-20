@@ -1,10 +1,11 @@
-mod views;
+mod widgets;
+
+use widgets::about_dialog::AboutDialog;
+use widgets::login::widget::LoginWidget;
+use widgets::message_container::widget::MessageContainerWidget;
 
 use relm4::actions::{RelmActionGroup, RelmAction, ActionGroupName};
-use views::about_dialog::AboutDialog;
 use relm4::ComponentController;
-use views::login::widget::LoginView as Login;
-use views::messages::widget::MessagesView as Message;
 
 use relm4::{adw, Controller, ComponentBuilder};
 use gtk::prelude::*;
@@ -16,8 +17,8 @@ use relm4::{
 };
 
 struct App {
-    login: AsyncConnector<Login>,
-    messages: AsyncConnector<Message>,
+    login: AsyncConnector<LoginWidget>,
+    messages: AsyncConnector<MessageContainerWidget>,
     about_dialog: Option<Controller<AboutDialog>>
 }
 
@@ -120,8 +121,8 @@ impl AsyncComponent for App {
         root: Self::Root,
         _sender: AsyncComponentSender<Self>
     ) -> AsyncComponentParts<Self> {
-        let login = views::login::widget::LoginView::builder().launch(());
-        let messages = views::messages::widget::MessagesView::builder().launch(());
+        let login = LoginWidget::builder().launch(());
+        let messages = MessageContainerWidget::builder().launch(());
 
         let mut model = App {
             login,
@@ -173,11 +174,11 @@ impl AsyncComponent for App {
 
         widgets
             .stack
-            .add_titled_with_icon(model.login.widget(), Some("login"), &"Login", &"go-home-symbolic");
+            .add_titled_with_icon(model.login.widget(), Some("login"), &"Login", &"padlock2-symbolic");
 
         widgets
             .stack
-            .add_titled_with_icon(model.messages.widget(), Some("messages"), &"Messages", &"go-home-symbolic");
+            .add_titled_with_icon(model.messages.widget(), Some("messages"), &"Messages", &"chat-bubble-text-symbolic");
 
         widgets
             .switcher_bar
