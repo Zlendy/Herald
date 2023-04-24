@@ -174,11 +174,11 @@ impl AsyncComponent for App {
 
         widgets
             .stack
-            .add_titled_with_icon(model.login.widget(), Some("login"), &"Login", &"padlock2-symbolic");
+            .add_titled_with_icon(model.login.widget(), Some("login"), "Login", "padlock2-symbolic");
 
         widgets
             .stack
-            .add_titled_with_icon(model.messages.widget(), Some("messages"), &"Messages", &"chat-bubble-text-symbolic");
+            .add_titled_with_icon(model.messages.widget(), Some("messages"), "Messages", "chat-bubble-text-symbolic");
 
         widgets
             .switcher_bar

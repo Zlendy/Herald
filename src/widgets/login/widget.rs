@@ -82,7 +82,7 @@ impl AsyncComponent for LoginWidget {
 
 
         log::info!("Username: \"{}\". Password: \"{}\"", &self.username, &self.password);
-        let response = LoginWidget::create_client(&self.username.as_str(), &self.password.as_str()).await.unwrap();
+        let response = LoginWidget::create_client(self.username.as_str(), self.password.as_str()).await.unwrap();
             log::info!("{:#?}", &response);
 
             match response.get("token").cloned() { // TODO: Fix extra brackets
