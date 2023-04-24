@@ -8,18 +8,18 @@ use relm4::loading_widgets::LoadingWidgets;
 use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
 
 #[derive(Debug)]
-struct Counter {
+struct MessageComponent {
     value: u8,
 }
 
 #[derive(Debug)]
-enum CounterMsg {
+enum MessageComponentInput {
     Increment,
     Decrement,
 }
 
 #[derive(Debug)]
-enum CounterOutput {
+enum MessageComponentOutput {
     SendFront(DynamicIndex),
     MoveUp(DynamicIndex),
     MoveDown(DynamicIndex),
@@ -27,16 +27,18 @@ enum CounterOutput {
 }
 
 #[relm4::factory(async)]
-impl AsyncFactoryComponent for Counter {
+impl AsyncFactoryComponent for MessageComponent {
     type Init = u8;
-    type Input = CounterMsg;
-    type Output = CounterOutput;
+    type Input = MessageComponentInput;
+    type Output = MessageComponentOutput;
     type CommandOutput = ();
-    type ParentInput = AppMsg;
+    type ParentInput = FactoryMsg;
     type ParentWidget = gtk::Box;
 
     view! {
         root = gtk::Box {
+            set_halign: gtk::Align::Center,
+
             #[name(label)]
             gtk::Label {
                 #[watch]
@@ -47,20 +49,20 @@ impl AsyncFactoryComponent for Counter {
             #[name(add_button)]
             gtk::Button {
                 set_label: "+",
-                connect_clicked => CounterMsg::Increment,
+                connect_clicked => MessageComponentInput::Increment,
             },
 
             #[name(remove_button)]
             gtk::Button {
                 set_label: "-",
-                connect_clicked => CounterMsg::Decrement,
+                connect_clicked => MessageComponentInput::Decrement,
             },
 
             #[name(move_up_button)]
             gtk::Button {
                 set_label: "Up",
                 connect_clicked[sender, index] => move |_| {
-                    sender.output(CounterOutput::MoveUp(index.clone()))
+                    sender.output(MessageComponentOutput::MoveUp(index.clone()))
                 }
             },
 
@@ -68,7 +70,7 @@ impl AsyncFactoryComponent for Counter {
             gtk::Button {
                 set_label: "Down",
                 connect_clicked[sender, index] => move |_| {
-                    sender.output(CounterOutput::MoveDown(index.clone()))
+                    sender.output(MessageComponentOutput::MoveDown(index.clone()))
                 }
             },
 
@@ -76,14 +78,14 @@ impl AsyncFactoryComponent for Counter {
             gtk::Button {
                 set_label: "To Start",
                 connect_clicked[sender, index] => move |_| {
-                    sender.output(CounterOutput::SendFront(index.clone()))
+                    sender.output(MessageComponentOutput::SendFront(index.clone()))
                 }
             },
 
             gtk::Button {
                 set_label: "Remove",
                 connect_clicked[sender, index] => move |_| {
-                    sender.output(CounterOutput::Remove(index.clone()))
+                    sender.output(MessageComponentOutput::Remove(index.clone()))
                 }
             }
         }
@@ -109,12 +111,12 @@ impl AsyncFactoryComponent for Counter {
         Some(LoadingWidgets::new(root, spinner))
     }
 
-    fn output_to_parent_input(output: Self::Output) -> Option<AppMsg> {
+    fn output_to_parent_input(output: Self::Output) -> Option<FactoryMsg> {
         Some(match output {
-            CounterOutput::SendFront(index) => AppMsg::SendFront(index),
-            CounterOutput::MoveUp(index) => AppMsg::MoveUp(index),
-            CounterOutput::MoveDown(index) => AppMsg::MoveDown(index),
-            CounterOutput::Remove(index) => AppMsg::Remove(index),
+            MessageComponentOutput::SendFront(index) => FactoryMsg::SendFront(index),
+            MessageComponentOutput::MoveUp(index) => FactoryMsg::MoveUp(index),
+            MessageComponentOutput::MoveDown(index) => FactoryMsg::MoveDown(index),
+            MessageComponentOutput::Remove(index) => FactoryMsg::Remove(index),
         })
     }
 
@@ -130,10 +132,10 @@ impl AsyncFactoryComponent for Counter {
     async fn update(&mut self, msg: Self::Input, _sender: AsyncFactorySender<Self>) {
         tokio::time::sleep(Duration::from_secs(1)).await;
         match msg {
-            CounterMsg::Increment => {
+            MessageComponentInput::Increment => {
                 self.value = self.value.wrapping_add(1);
             }
-            CounterMsg::Decrement => {
+            MessageComponentInput::Decrement => {
                 self.value = self.value.wrapping_sub(1);
             }
         }
@@ -146,11 +148,11 @@ impl AsyncFactoryComponent for Counter {
 
 pub struct MessageFactory {
     created_widgets: u8,
-    counters: AsyncFactoryVecDeque<Counter>,
+    messages: AsyncFactoryVecDeque<MessageComponent>,
 }
 
 #[derive(Debug)]
-pub enum AppMsg {
+pub enum FactoryMsg {
     AddCounter,
     RemoveCounter,
     SendFront(DynamicIndex),
@@ -162,24 +164,27 @@ pub enum AppMsg {
 #[relm4::component(pub)]
 impl SimpleComponent for MessageFactory {
     type Init = u8;
-    type Input = AppMsg;
+    type Input = FactoryMsg;
     type Output = ();
 
     view! {
         gtk::Box {
+            set_hexpand: true,
+
             gtk::Box {
+                set_hexpand: true,
                 set_orientation: gtk::Orientation::Vertical,
                 set_spacing: 5,
                 set_margin_all: 5,
 
                 gtk::Button {
                     set_label: "Add counter",
-                    connect_clicked => AppMsg::AddCounter,
+                    connect_clicked => FactoryMsg::AddCounter,
                 },
 
                 gtk::Button {
                     set_label: "Remove counter",
-                    connect_clicked => AppMsg::RemoveCounter,
+                    connect_clicked => FactoryMsg::RemoveCounter,
                 },
 
                 #[local_ref]
@@ -196,32 +201,32 @@ impl SimpleComponent for MessageFactory {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let counters = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
+        let messages = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
         let model = MessageFactory {
             created_widgets: counter,
-            counters,
+            messages,
         };
 
-        let counter_box = model.counters.widget();
+        let counter_box = model.messages.widget();
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
-        let mut counters_guard = self.counters.guard();
+        let mut counters_guard = self.messages.guard();
         match msg {
-            AppMsg::AddCounter => {
+            FactoryMsg::AddCounter => {
                 counters_guard.push_back(self.created_widgets);
                 self.created_widgets = self.created_widgets.wrapping_add(1);
             }
-            AppMsg::RemoveCounter => {
+            FactoryMsg::RemoveCounter => {
                 counters_guard.pop_back();
             }
-            AppMsg::SendFront(index) => {
+            FactoryMsg::SendFront(index) => {
                 counters_guard.move_front(index.current_index());
             }
-            AppMsg::MoveDown(index) => {
+            FactoryMsg::MoveDown(index) => {
                 let index = index.current_index();
                 let new_index = index + 1;
                 // Already at the end?
@@ -229,14 +234,14 @@ impl SimpleComponent for MessageFactory {
                     counters_guard.move_to(index, new_index);
                 }
             }
-            AppMsg::MoveUp(index) => {
+            FactoryMsg::MoveUp(index) => {
                 let index = index.current_index();
                 // Already at the start?
                 if index != 0 {
                     counters_guard.move_to(index, index - 1);
                 }
             }
-            AppMsg::Remove(index) => {
+            FactoryMsg::Remove(index) => {
                 counters_guard.remove(index.current_index());
             }
         }

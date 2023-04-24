@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=herald
+Name=Herald
 Exec=herald
 Icon=io.github.zlendy.herald
 Terminal=false

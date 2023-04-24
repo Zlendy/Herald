@@ -33,6 +33,7 @@ impl AsyncComponent for App {
         #[name = "main_window"]
         adw::Window {
             set_default_size: (800, 300),
+            set_icon_name: Some("io.github.zlendy.herald"),
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
