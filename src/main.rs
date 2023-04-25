@@ -5,11 +5,11 @@ use widgets::login::widget::LoginWidget;
 use widgets::message_container::widget::MessageContainerWidget;
 
 use relm4::actions::{RelmActionGroup, RelmAction, ActionGroupName};
-use relm4::ComponentController;
+use relm4::{ComponentController, Component};
 
 use relm4::{adw, Controller, ComponentBuilder};
 use gtk::prelude::*;
-use relm4::component::{AsyncComponentController, AsyncConnector};
+use relm4::component::{AsyncComponentController, AsyncConnector, Connector};
 
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
@@ -18,7 +18,7 @@ use relm4::{
 
 struct App {
     login: AsyncConnector<LoginWidget>,
-    messages: AsyncConnector<MessageContainerWidget>,
+    messages: Connector<MessageContainerWidget>,
     about_dialog: Option<Controller<AboutDialog>>
 }
 

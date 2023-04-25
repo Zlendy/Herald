@@ -1,8 +1,8 @@
-use relm4::{adw, Component, factory::FactoryView, ComponentController, component::Connector};
-use adw::traits::PreferencesRowExt;
+use relm4::{adw, Component, factory::FactoryView, ComponentController, component::Connector, SimpleComponent, ComponentSender};
+use adw::{traits::PreferencesRowExt, Leaflet};
 use gtk::prelude::*;
 use relm4::{
-    component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
+    component::ComponentParts,
     gtk,
 };
 use crate::widgets::factory_async::{MessageFactory, MessageComponent};
@@ -13,15 +13,11 @@ pub struct MessageContainerWidget {
     factory: Connector<MessageFactory>,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum MessageType {}
-
-#[relm4::component(pub async)]
-impl AsyncComponent for MessageContainerWidget {
+#[relm4::component(pub)]
+impl SimpleComponent for MessageContainerWidget {
     type Init = ();
-    type Input = MessageType;
+    type Input = ();
     type Output = ();
-    type CommandOutput = MessageType;
 
     view! {
         #[name = "leaflet"]
@@ -66,27 +62,11 @@ impl AsyncComponent for MessageContainerWidget {
         }
     }
 
-    async fn update_cmd(
-        &mut self,
-        msg: MessageType,
-        _sender: AsyncComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-    }
-
-    async fn update(
-        &mut self,
-        msg: MessageType,
-        _sender: AsyncComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-    }
-
-    async fn init(
+    fn init(
         _init: Self::Init,
-        root: Self::Root,
-        _sender: AsyncComponentSender<Self>
-    ) -> AsyncComponentParts<Self> {
+        root: &Leaflet,
+        _sender: ComponentSender<MessageContainerWidget>
+    ) -> ComponentParts<Self> {
         let factory = MessageFactory::builder().launch(MessageComponent::default());
 
         let model = MessageContainerWidget {
@@ -101,7 +81,7 @@ impl AsyncComponent for MessageContainerWidget {
             .factory_append(model.factory.widget(), &());
 
 
-        AsyncComponentParts { model, widgets }
+        ComponentParts { model, widgets }
     }
 
     fn pre_view() {

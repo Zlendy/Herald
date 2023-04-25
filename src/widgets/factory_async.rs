@@ -23,23 +23,14 @@ impl Default for MessageComponent {
 }
 
 #[derive(Debug)]
-pub enum MessageComponentInput {
-    Increment,
-    Decrement,
-}
-
-#[derive(Debug)]
 pub enum MessageComponentOutput {
-    SendFront(DynamicIndex),
-    MoveUp(DynamicIndex),
-    MoveDown(DynamicIndex),
     Remove(DynamicIndex),
 }
 
 #[relm4::factory(pub async)]
 impl AsyncFactoryComponent for MessageComponent {
     type Init = MessageComponent;
-    type Input = MessageComponentInput;
+    type Input = ();
     type Output = MessageComponentOutput;
     type CommandOutput = ();
     type ParentInput = FactoryMsg;
@@ -106,9 +97,6 @@ impl AsyncFactoryComponent for MessageComponent {
 
     fn output_to_parent_input(output: Self::Output) -> Option<FactoryMsg> {
         Some(match output {
-            MessageComponentOutput::SendFront(index) => FactoryMsg::SendFront(index),
-            MessageComponentOutput::MoveUp(index) => FactoryMsg::MoveUp(index),
-            MessageComponentOutput::MoveDown(index) => FactoryMsg::MoveDown(index),
             MessageComponentOutput::Remove(index) => FactoryMsg::Remove(index),
         })
     }
@@ -121,18 +109,6 @@ impl AsyncFactoryComponent for MessageComponent {
         tokio::time::sleep(Duration::from_secs(1)).await;
         // Self { title: init.title.clone(), content: init.content.clone() }
         init
-    }
-
-    async fn update(&mut self, msg: Self::Input, _sender: AsyncFactorySender<Self>) {
-        tokio::time::sleep(Duration::from_secs(1)).await;
-        match msg {
-            MessageComponentInput::Increment => {
-                // self.value = self.value.wrapping_add(1);
-            }
-            MessageComponentInput::Decrement => {
-                // self.value = self.value.wrapping_sub(1);
-            }
-        }
     }
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
@@ -149,9 +125,6 @@ pub struct MessageFactory {
 pub enum FactoryMsg {
     AddMessage,
     RemoveMessage,
-    SendFront(DynamicIndex),
-    MoveUp(DynamicIndex),
-    MoveDown(DynamicIndex),
     Remove(DynamicIndex),
 }
 
@@ -220,24 +193,6 @@ impl SimpleComponent for MessageFactory {
             }
             FactoryMsg::RemoveMessage => {
                 counters_guard.pop_back();
-            }
-            FactoryMsg::SendFront(index) => {
-                counters_guard.move_front(index.current_index());
-            }
-            FactoryMsg::MoveDown(index) => {
-                let index = index.current_index();
-                let new_index = index + 1;
-                // Already at the end?
-                if new_index < counters_guard.len() {
-                    counters_guard.move_to(index, new_index);
-                }
-            }
-            FactoryMsg::MoveUp(index) => {
-                let index = index.current_index();
-                // Already at the start?
-                if index != 0 {
-                    counters_guard.move_to(index, index - 1);
-                }
             }
             FactoryMsg::Remove(index) => {
                 counters_guard.remove(index.current_index());
