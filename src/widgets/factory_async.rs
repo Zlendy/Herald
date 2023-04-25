@@ -1,6 +1,6 @@
 use std::time::Duration;
-
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
+
 use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
 };
@@ -8,14 +8,22 @@ use relm4::loading_widgets::LoadingWidgets;
 use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
 
 #[derive(Debug, Clone)]
-pub struct MessageComponent {
+pub struct MessageModel {
+    id: u32,
     title: String,
     content: String,
 }
 
-impl Default for MessageComponent {
+impl MessageModel {
+    pub fn new(id: u32, title: String, content: String) -> Self {
+        Self { id, title, content }
+    }
+}
+
+impl Default for MessageModel {
     fn default() -> Self {
         Self {
+            id: 0,
             title: "Message title".to_string(),
             content: "Message content".to_string(),
         }
@@ -28,8 +36,8 @@ pub enum MessageComponentOutput {
 }
 
 #[relm4::factory(pub async)]
-impl AsyncFactoryComponent for MessageComponent {
-    type Init = MessageComponent;
+impl AsyncFactoryComponent for MessageModel {
+    type Init = MessageModel;
     type Input = ();
     type Output = MessageComponentOutput;
     type CommandOutput = ();
@@ -117,20 +125,21 @@ impl AsyncFactoryComponent for MessageComponent {
 }
 
 pub struct MessageFactory {
-    created_widgets: MessageComponent,
-    messages: AsyncFactoryVecDeque<MessageComponent>,
+    created_widgets: MessageModel,
+    messages: AsyncFactoryVecDeque<MessageModel>,
 }
 
 #[derive(Debug)]
 pub enum FactoryMsg {
-    AddMessage,
+    AddDefaultMessage,
+    AddMessage(MessageModel),
     RemoveMessage,
     Remove(DynamicIndex),
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for MessageFactory {
-    type Init = MessageComponent;
+    type Init = MessageModel;
     type Input = FactoryMsg;
     type Output = ();
 
@@ -146,7 +155,7 @@ impl SimpleComponent for MessageFactory {
 
                 gtk::Button {
                     set_label: "Add test notification",
-                    connect_clicked => FactoryMsg::AddMessage,
+                    connect_clicked => FactoryMsg::AddDefaultMessage,
                 },
 
                 gtk::Button {
@@ -158,7 +167,7 @@ impl SimpleComponent for MessageFactory {
                     set_vexpand: true,
 
                     #[local_ref]
-                    counter_box -> gtk::Box {
+                    message_box -> gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
                         set_spacing: 5,
                     }
@@ -173,29 +182,32 @@ impl SimpleComponent for MessageFactory {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let messages = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
+
         let model = MessageFactory {
             created_widgets: counter,
             messages,
         };
 
-        let counter_box = model.messages.widget();
+        let message_box = model.messages.widget();
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
-        let mut counters_guard = self.messages.guard();
+        let mut guard = self.messages.guard();
         match msg {
-            FactoryMsg::AddMessage => {
-                counters_guard.push_back(self.created_widgets.clone());
-                // self.created_widgets = self.created_widgets.wrapping_add(1);
+            FactoryMsg::AddDefaultMessage => {
+                guard.push_back(self.created_widgets.clone());
+            }
+            FactoryMsg::AddMessage(model) => {
+                guard.push_back(model);
             }
             FactoryMsg::RemoveMessage => {
-                counters_guard.pop_back();
+                guard.pop_back();
             }
             FactoryMsg::Remove(index) => {
-                counters_guard.remove(index.current_index());
+                guard.remove(index.current_index());
             }
         }
     }

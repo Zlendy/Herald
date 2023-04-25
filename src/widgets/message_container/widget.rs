@@ -1,11 +1,8 @@
-use relm4::{adw, Component, factory::FactoryView, ComponentController, component::Connector, SimpleComponent, ComponentSender};
-use adw::{traits::PreferencesRowExt, Leaflet};
+use relm4::{adw, Component, factory::FactoryView, ComponentController, component::{Connector, AsyncComponent, AsyncComponentParts}, AsyncComponentSender};
+use adw::{traits::PreferencesRowExt};
 use gtk::prelude::*;
-use relm4::{
-    component::ComponentParts,
-    gtk,
-};
-use crate::widgets::factory_async::{MessageFactory, MessageComponent};
+use relm4::gtk;
+use crate::widgets::factory_async::{MessageFactory, MessageModel, FactoryMsg};
 
 pub struct MessageContainerWidget {
     #[allow(dead_code)]
@@ -13,11 +10,12 @@ pub struct MessageContainerWidget {
     factory: Connector<MessageFactory>,
 }
 
-#[relm4::component(pub)]
-impl SimpleComponent for MessageContainerWidget {
+#[relm4::component(pub async)]
+impl AsyncComponent for MessageContainerWidget {
     type Init = ();
     type Input = ();
     type Output = ();
+    type CommandOutput = ();
 
     view! {
         #[name = "leaflet"]
@@ -62,12 +60,16 @@ impl SimpleComponent for MessageContainerWidget {
         }
     }
 
-    fn init(
+    async fn init(
         _init: Self::Init,
-        root: &Leaflet,
-        _sender: ComponentSender<MessageContainerWidget>
-    ) -> ComponentParts<Self> {
-        let factory = MessageFactory::builder().launch(MessageComponent::default());
+        root: Self::Root,
+        _sender: AsyncComponentSender<MessageContainerWidget>
+    ) -> AsyncComponentParts<Self> {
+        let factory = MessageFactory::builder().launch(MessageModel::default());
+
+        factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 1.1".to_string(), "Test 1.2".to_string())));
+        factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 2.1".to_string(), "Test 2.2".to_string())));
+        factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 3.1".to_string(), "Test 3.2".to_string())));
 
         let model = MessageContainerWidget {
             current_section: 1,
@@ -81,10 +83,10 @@ impl SimpleComponent for MessageContainerWidget {
             .factory_append(model.factory.widget(), &());
 
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn pre_view() {
+    async fn pre_view() {
         // widgets.leaflet.navigate(adw::NavigationDirection::Forward);
     }
 }
