@@ -5,7 +5,7 @@ use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
     gtk,
 };
-use crate::widgets::factory_async::MessageFactory;
+use crate::widgets::factory_async::{MessageFactory, MessageComponent};
 
 pub struct MessageContainerWidget {
     #[allow(dead_code)]
@@ -87,7 +87,7 @@ impl AsyncComponent for MessageContainerWidget {
         root: Self::Root,
         _sender: AsyncComponentSender<Self>
     ) -> AsyncComponentParts<Self> {
-        let factory = MessageFactory::builder().launch(0);
+        let factory = MessageFactory::builder().launch(MessageComponent::default());
 
         let model = MessageContainerWidget {
             current_section: 1,

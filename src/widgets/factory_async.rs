@@ -7,28 +7,38 @@ use relm4::factory::{
 use relm4::loading_widgets::LoadingWidgets;
 use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
 
-#[derive(Debug)]
-struct MessageComponent {
-    value: u8,
+#[derive(Debug, Clone)]
+pub struct MessageComponent {
+    title: String,
+    content: String,
+}
+
+impl Default for MessageComponent {
+    fn default() -> Self {
+        Self {
+            title: "Message title".to_string(),
+            content: "Message content".to_string(),
+        }
+    }
 }
 
 #[derive(Debug)]
-enum MessageComponentInput {
+pub enum MessageComponentInput {
     Increment,
     Decrement,
 }
 
 #[derive(Debug)]
-enum MessageComponentOutput {
+pub enum MessageComponentOutput {
     SendFront(DynamicIndex),
     MoveUp(DynamicIndex),
     MoveDown(DynamicIndex),
     Remove(DynamicIndex),
 }
 
-#[relm4::factory(async)]
+#[relm4::factory(pub async)]
 impl AsyncFactoryComponent for MessageComponent {
-    type Init = u8;
+    type Init = MessageComponent;
     type Input = MessageComponentInput;
     type Output = MessageComponentOutput;
     type CommandOutput = ();
@@ -37,57 +47,40 @@ impl AsyncFactoryComponent for MessageComponent {
 
     view! {
         root = gtk::Box {
-            set_halign: gtk::Align::Center,
+            set_halign: gtk::Align::Fill,
+            set_hexpand: true,
+            set_homogeneous: true,
 
-            #[name(label)]
-            gtk::Label {
-                #[watch]
-                set_label: &self.value.to_string(),
-                set_width_chars: 3,
+            gtk::ListBoxRow {
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Horizontal,
+                        set_hexpand: true,
+
+                        gtk::Label {
+                            set_hexpand: true,
+                            set_halign: gtk::Align::Start,
+                            set_text: &self.title,
+                        },
+
+                        gtk::Button {
+                            set_icon_name: "user-trash-symbolic",
+                            connect_clicked[sender, index] => move |_| {
+                                sender.output(MessageComponentOutput::Remove(index.clone()))
+                            }
+                        },
+                    },
+                    
+                    gtk::Label {
+                        set_can_focus: false,
+                        set_wrap: true,
+                        set_halign: gtk::Align::Start,
+                        set_text: &self.content,
+                    },
+                },
             },
-
-            #[name(add_button)]
-            gtk::Button {
-                set_label: "+",
-                connect_clicked => MessageComponentInput::Increment,
-            },
-
-            #[name(remove_button)]
-            gtk::Button {
-                set_label: "-",
-                connect_clicked => MessageComponentInput::Decrement,
-            },
-
-            #[name(move_up_button)]
-            gtk::Button {
-                set_label: "Up",
-                connect_clicked[sender, index] => move |_| {
-                    sender.output(MessageComponentOutput::MoveUp(index.clone()))
-                }
-            },
-
-            #[name(move_down_button)]
-            gtk::Button {
-                set_label: "Down",
-                connect_clicked[sender, index] => move |_| {
-                    sender.output(MessageComponentOutput::MoveDown(index.clone()))
-                }
-            },
-
-            #[name(to_front_button)]
-            gtk::Button {
-                set_label: "To Start",
-                connect_clicked[sender, index] => move |_| {
-                    sender.output(MessageComponentOutput::SendFront(index.clone()))
-                }
-            },
-
-            gtk::Button {
-                set_label: "Remove",
-                connect_clicked[sender, index] => move |_| {
-                    sender.output(MessageComponentOutput::Remove(index.clone()))
-                }
-            }
         }
     }
 
@@ -121,40 +114,41 @@ impl AsyncFactoryComponent for MessageComponent {
     }
 
     async fn init_model(
-        value: Self::Init,
+        init: Self::Init,
         _index: &DynamicIndex,
         _sender: AsyncFactorySender<Self>,
     ) -> Self {
         tokio::time::sleep(Duration::from_secs(1)).await;
-        Self { value }
+        // Self { title: init.title.clone(), content: init.content.clone() }
+        init
     }
 
     async fn update(&mut self, msg: Self::Input, _sender: AsyncFactorySender<Self>) {
         tokio::time::sleep(Duration::from_secs(1)).await;
         match msg {
             MessageComponentInput::Increment => {
-                self.value = self.value.wrapping_add(1);
+                // self.value = self.value.wrapping_add(1);
             }
             MessageComponentInput::Decrement => {
-                self.value = self.value.wrapping_sub(1);
+                // self.value = self.value.wrapping_sub(1);
             }
         }
     }
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        println!("Counter with value {} was destroyed", self.value);
+        println!("Counter with value {} was destroyed", self.content);
     }
 }
 
 pub struct MessageFactory {
-    created_widgets: u8,
+    created_widgets: MessageComponent,
     messages: AsyncFactoryVecDeque<MessageComponent>,
 }
 
 #[derive(Debug)]
 pub enum FactoryMsg {
-    AddCounter,
-    RemoveCounter,
+    AddMessage,
+    RemoveMessage,
     SendFront(DynamicIndex),
     MoveUp(DynamicIndex),
     MoveDown(DynamicIndex),
@@ -163,7 +157,7 @@ pub enum FactoryMsg {
 
 #[relm4::component(pub)]
 impl SimpleComponent for MessageFactory {
-    type Init = u8;
+    type Init = MessageComponent;
     type Input = FactoryMsg;
     type Output = ();
 
@@ -178,19 +172,23 @@ impl SimpleComponent for MessageFactory {
                 set_margin_all: 5,
 
                 gtk::Button {
-                    set_label: "Add counter",
-                    connect_clicked => FactoryMsg::AddCounter,
+                    set_label: "Add test notification",
+                    connect_clicked => FactoryMsg::AddMessage,
                 },
 
                 gtk::Button {
-                    set_label: "Remove counter",
-                    connect_clicked => FactoryMsg::RemoveCounter,
+                    set_label: "Remove test notification",
+                    connect_clicked => FactoryMsg::RemoveMessage,
                 },
 
-                #[local_ref]
-                counter_box -> gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-                    set_spacing: 5,
+                gtk::ScrolledWindow {
+                    set_vexpand: true,
+
+                    #[local_ref]
+                    counter_box -> gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_spacing: 5,
+                    }
                 }
             }
         }
@@ -216,11 +214,11 @@ impl SimpleComponent for MessageFactory {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         let mut counters_guard = self.messages.guard();
         match msg {
-            FactoryMsg::AddCounter => {
-                counters_guard.push_back(self.created_widgets);
-                self.created_widgets = self.created_widgets.wrapping_add(1);
+            FactoryMsg::AddMessage => {
+                counters_guard.push_back(self.created_widgets.clone());
+                // self.created_widgets = self.created_widgets.wrapping_add(1);
             }
-            FactoryMsg::RemoveCounter => {
+            FactoryMsg::RemoveMessage => {
                 counters_guard.pop_back();
             }
             FactoryMsg::SendFront(index) => {
