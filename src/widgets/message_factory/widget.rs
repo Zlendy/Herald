@@ -39,7 +39,15 @@ impl AsyncFactoryComponent for MessageModel {
                         gtk::Label {
                             set_hexpand: true,
                             set_halign: gtk::Align::Start,
-                            set_text: &self.title,
+                            
+                            set_text: match &self.title {
+                                Some(title) => {
+                                    title
+                                }
+                                None => {
+                                    ""
+                                }
+                            },
                         },
 
                         gtk::Button {
@@ -54,7 +62,7 @@ impl AsyncFactoryComponent for MessageModel {
                         set_can_focus: false,
                         set_wrap: true,
                         set_halign: gtk::Align::Start,
-                        set_text: &self.content,
+                        set_text: &self.message,
                     },
                 },
             },
@@ -98,7 +106,7 @@ impl AsyncFactoryComponent for MessageModel {
     }
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        println!("Counter with value {} was destroyed", self.content);
+        println!("Counter with value {} was destroyed", self.message);
     }
 }
 
