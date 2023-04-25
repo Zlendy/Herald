@@ -2,7 +2,8 @@ use relm4::{adw, Component, factory::FactoryView, ComponentController, component
 use adw::{traits::PreferencesRowExt};
 use gtk::prelude::*;
 use relm4::gtk;
-use crate::widgets::factory_async::{MessageFactory, MessageModel, FactoryMsg};
+use crate::widgets::message_factory::widget::{MessageFactory, FactoryMsg};
+use crate::widgets::message_factory::models::MessageModel;
 
 pub struct MessageContainerWidget {
     #[allow(dead_code)]

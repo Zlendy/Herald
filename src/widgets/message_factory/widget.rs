@@ -6,29 +6,7 @@ use relm4::factory::{
 };
 use relm4::loading_widgets::LoadingWidgets;
 use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
-
-#[derive(Debug, Clone)]
-pub struct MessageModel {
-    id: u32,
-    title: String,
-    content: String,
-}
-
-impl MessageModel {
-    pub fn new(id: u32, title: String, content: String) -> Self {
-        Self { id, title, content }
-    }
-}
-
-impl Default for MessageModel {
-    fn default() -> Self {
-        Self {
-            id: 0,
-            title: "Message title".to_string(),
-            content: "Message content".to_string(),
-        }
-    }
-}
+use super::models::MessageModel;
 
 #[derive(Debug)]
 pub enum MessageComponentOutput {
