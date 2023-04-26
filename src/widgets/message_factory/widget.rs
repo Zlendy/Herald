@@ -1,11 +1,13 @@
 use std::time::Duration;
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 
+use libadwaita::gtk::pango;
 use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
 };
 use relm4::loading_widgets::LoadingWidgets;
 use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
+
 use super::models::MessageModel;
 
 #[derive(Debug)]
@@ -39,15 +41,20 @@ impl AsyncFactoryComponent for MessageModel {
                         gtk::Label {
                             set_hexpand: true,
                             set_halign: gtk::Align::Start,
-                            
-                            set_text: match &self.title {
-                                Some(title) => {
-                                    title
-                                }
-                                None => {
-                                    ""
-                                }
-                            },
+
+                            set_use_markup: true,
+                            set_markup: {
+                                let value = match &self.title {
+                                    Some(title) => {
+                                        title
+                                    }
+                                    None => {
+                                        ""
+                                    }
+                                };
+
+                                format!("<b>{value}</b>").as_str() // TODO: Sanitize input
+                            }
                         },
 
                         gtk::Button {
@@ -62,6 +69,7 @@ impl AsyncFactoryComponent for MessageModel {
                         set_can_focus: false,
                         set_wrap: true,
                         set_halign: gtk::Align::Start,
+
                         set_text: &self.message,
                     },
                 },
