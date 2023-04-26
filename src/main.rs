@@ -16,6 +16,8 @@ use relm4::{
     gtk, RelmApp,
 };
 
+use dotenv::dotenv;
+
 struct App {
     login: AsyncConnector<LoginWidget>,
     messages: AsyncConnector<MessageContainerWidget>,
@@ -218,6 +220,7 @@ relm4::new_stateful_action!(ExampleU8Action, WindowActionGroup, "example2", u8, 
 
 fn main() {
     env_logger::init();
+    dotenv().ok();
 
     let app = RelmApp::new("io.github.zlendy.herald");
     app.run_async::<App>(());

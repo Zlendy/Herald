@@ -1,9 +1,14 @@
+use std::env;
+
 use relm4::{adw, Component, factory::FactoryView, ComponentController, component::{Connector, AsyncComponent, AsyncComponentParts}, AsyncComponentSender};
 use adw::{traits::PreferencesRowExt};
 use gtk::prelude::*;
 use relm4::gtk;
+use serde_json::Value;
 use crate::widgets::message_factory::widget::{MessageFactory, FactoryMsg};
 use crate::widgets::message_factory::models::MessageModel;
+
+const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
 
 pub struct MessageContainerWidget {
     #[allow(dead_code)]
@@ -68,9 +73,17 @@ impl AsyncComponent for MessageContainerWidget {
     ) -> AsyncComponentParts<Self> {
         let factory = MessageFactory::builder().launch(MessageModel::default());
 
-        factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 1.1".to_string(), "Test 1.2".to_string())));
-        factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 2.1".to_string(), "Test 2.2".to_string())));
-        factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 3.1".to_string(), "Test 3.2".to_string())));
+        let response = get_messages().await.unwrap(); // TODO: Move to Gotify struct
+        let messages: Vec<MessageModel> = serde_json::from_str(&response["messages"].to_string()).unwrap();
+
+        for message in messages {
+            // log::info!("{:#?}", message);
+            factory.emit(FactoryMsg::AddMessage(message));
+        }
+
+        // factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 1.1".to_string(), "Test 1.2".to_string())));
+        // factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 2.1".to_string(), "Test 2.2".to_string())));
+        // factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 3.1".to_string(), "Test 3.2".to_string())));
 
         let model = MessageContainerWidget {
             current_section: 1,
@@ -90,4 +103,14 @@ impl AsyncComponent for MessageContainerWidget {
     async fn pre_view() {
         // widgets.leaflet.navigate(adw::NavigationDirection::Forward);
     }
+}
+
+async fn get_messages() -> Result<Value, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new()
+        .get(format!("{}/message", GOTIFY))
+        .header("X-Gotify-Key", env::var("TOKEN").unwrap());
+
+    let resp = client.send().await?.json::<Value>().await?;
+
+    Ok(resp)
 }

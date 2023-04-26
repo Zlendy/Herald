@@ -106,12 +106,12 @@ impl AsyncFactoryComponent for MessageModel {
     }
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        println!("Counter with value {} was destroyed", self.message);
+        log::debug!("Message with id {} was destroyed", self.id);
     }
 }
 
 pub struct MessageFactory {
-    created_widgets: MessageModel,
+    default_widget: MessageModel,
     messages: AsyncFactoryVecDeque<MessageModel>,
 }
 
@@ -163,14 +163,14 @@ impl SimpleComponent for MessageFactory {
     }
 
     fn init(
-        counter: Self::Init,
+        default_widget: Self::Init,
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let messages = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
 
         let model = MessageFactory {
-            created_widgets: counter,
+            default_widget,
             messages,
         };
 
@@ -184,15 +184,21 @@ impl SimpleComponent for MessageFactory {
         let mut guard = self.messages.guard();
         match msg {
             FactoryMsg::AddDefaultMessage => {
-                guard.push_back(self.created_widgets.clone());
+                guard.push_front(self.default_widget.clone());
             }
             FactoryMsg::AddMessage(model) => {
-                guard.push_back(model);
+                guard.push_front(model);
             }
             FactoryMsg::RemoveMessage => {
-                guard.pop_back();
+                guard.pop_front();
             }
             FactoryMsg::Remove(index) => {
+                let Some(model) = guard.get(index.current_index()) else {
+                    log::error!("Message with index {} not found", index.current_index());
+                    return;
+                };
+
+                log::info!("Requested deletion of message with id {}", model.id);
                 guard.remove(index.current_index());
             }
         }
