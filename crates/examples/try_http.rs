@@ -3,6 +3,7 @@ use std::env;
 
 use serde_json::value::from_value;
 use serde_json::Value;
+use herald::widgets::message_factory::models::MessageModel;
 
 use lazy_static::lazy_static;
 
@@ -14,23 +15,26 @@ lazy_static! {
 async fn main() {
     dotenv().ok(); // Load env variables in .env
 
-    println!("-- Application list --");
-    let apps = get_applications().await.unwrap();
-    println!("{:#?}", &apps);
+    // println!("-- Application list --");
+    // let apps = get_applications().await.unwrap();
+    // println!("{:#?}", &apps);
 
     println!("\n-- Message list --");
     let messages = get_messages().await.unwrap();
-    println!("{:#?}", &messages);
+    // println!("{:#?}", &messages);
+    let message_vec: Vec<MessageModel> = serde_json::from_str(&messages["messages"].to_string()).unwrap();
+    println!("{:#?}", &message_vec);
 
-    println!("\n-- Message list from third application --");
-    let message = get_message(from_value::<i32>(apps[2]["id"].clone()).unwrap())
-        .await
-        .unwrap();
-    println!("{:#?}", &message);
+    // println!("\n-- Message list from third application --");
+    // let message = get_message(from_value::<i32>(apps[2]["id"].clone()).unwrap())
+    //     .await
+    //     .unwrap();
+    // println!("{:#?}", &message);
 }
 
 // This code should be abstracted into one generic function
 
+#[allow(dead_code)]
 async fn get_applications() -> Result<Value, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new()
         .get(format!("{}/application", *GOTIFY))
@@ -41,6 +45,7 @@ async fn get_applications() -> Result<Value, Box<dyn std::error::Error>> {
     Ok(resp)
 }
 
+#[allow(dead_code)]
 async fn get_messages() -> Result<Value, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new()
         .get(format!("{}/message", *GOTIFY))
@@ -51,6 +56,7 @@ async fn get_messages() -> Result<Value, Box<dyn std::error::Error>> {
     Ok(resp)
 }
 
+#[allow(dead_code)]
 async fn get_message(id: i32) -> Result<Value, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new()
         .get(format!("{}/application/{id}/message", *GOTIFY))

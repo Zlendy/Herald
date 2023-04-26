@@ -1,4 +1,6 @@
-#[derive(Debug, Clone)]
+use serde_derive::Deserialize;
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct MessageModel { // MessageExternal Model
     pub appid: i64,
     pub date: String,

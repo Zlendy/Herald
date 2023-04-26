@@ -1,6 +1,6 @@
 [package]
 name = "crates"
-version = "1.0.0"
+version = "0.1.0"
 edition = "2021"
 
 [dependencies]
@@ -16,3 +16,4 @@ serde_json = { version = "1.0.94", features = ["raw_value"] }
 lazy_static = "1.4.0"
 serde = "1.0.154"
 serde_derive = "1.0.154"
+herald = { path = "../" }
