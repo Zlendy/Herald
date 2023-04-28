@@ -1,37 +1,52 @@
 use std::env;
 
 use relm4::{adw, Component, factory::FactoryView, ComponentController, component::{Connector, AsyncComponent, AsyncComponentParts}, AsyncComponentSender};
-use adw::{traits::PreferencesRowExt};
+use adw::{traits::PreferencesRowExt, gtk::ListBoxRow, glib};
 use gtk::prelude::*;
 use relm4::gtk;
 use serde_json::Value;
-use crate::widgets::message_factory::widget::{MessageFactory, FactoryMsg};
+use crate::widgets::{message_factory::widget::{MessageFactory, FactoryMsg}};
 use crate::widgets::message_factory::models::MessageModel;
-
+// use crate::widgets::app::App;
 const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
 
 pub struct MessageContainerWidget {
     #[allow(dead_code)]
-    current_section: u32, // Unused for now
+    current_section: u32,
     factory: Connector<MessageFactory>,
+}
+
+#[derive(Debug)]
+pub enum MessageContainerSignals {
+    GoBack,
+    SelectRow(ListBoxRow),
 }
 
 #[relm4::component(pub async)]
 impl AsyncComponent for MessageContainerWidget {
     type Init = ();
-    type Input = ();
+    type Input = MessageContainerSignals;
     type Output = ();
     type CommandOutput = ();
 
     view! {
         #[name = "leaflet"]
         adw::Leaflet {
-            set_can_navigate_back: true,
+            set_can_navigate_back: false,
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
                 set_vexpand: true,
 
+                // #[name = "sidebar_header"]
+                //     adw::HeaderBar {
+                //         #[wrap(Some)]
+                //         set_title_widget = &adw::WindowTitle {
+                //             set_title: "Sidebar",
+                //     }
+                // },
+
+                #[name = "listbox"]
                 gtk::ListBox {
                     set_selection_mode: gtk::SelectionMode::Single,
                     add_css_class: "navigation-sidebar",
@@ -48,12 +63,12 @@ impl AsyncComponent for MessageContainerWidget {
                         set_title: "App 3",
                     },
 
-                    // connect_row_selected[sender] => move |_, row| {
-                    //     if let Some(row) = row {
-                    //         sender.input((row.index() + 1) as u32);
-                    //     }
-                    // }
-                }
+                    connect_row_selected[sender] => move |_, row| {
+                        if let Some(row) = row {
+                            sender.input(Self::Input::SelectRow(row.to_owned()));
+                        }
+                    }
+                },
             },
 
             #[name = "content"]
@@ -69,7 +84,7 @@ impl AsyncComponent for MessageContainerWidget {
     async fn init(
         _init: Self::Init,
         root: Self::Root,
-        _sender: AsyncComponentSender<MessageContainerWidget>
+        sender: AsyncComponentSender<MessageContainerWidget>
     ) -> AsyncComponentParts<Self> {
         let factory = MessageFactory::builder().launch(MessageModel::default());
 
@@ -78,12 +93,8 @@ impl AsyncComponent for MessageContainerWidget {
 
         for message in messages {
             // log::info!("{:#?}", message);
-            factory.emit(FactoryMsg::AddMessage(message));
+            factory.emit(FactoryMsg::AddMessageBack(message));
         }
-
-        // factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 1.1".to_string(), "Test 1.2".to_string())));
-        // factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 2.1".to_string(), "Test 2.2".to_string())));
-        // factory.emit(FactoryMsg::AddMessage(MessageModel::new(0, "Test 3.1".to_string(), "Test 3.2".to_string())));
 
         let model = MessageContainerWidget {
             current_section: 1,
@@ -96,12 +107,38 @@ impl AsyncComponent for MessageContainerWidget {
             .content
             .factory_append(model.factory.widget(), &());
 
+        widgets
+            .listbox
+            .bind_property("visible", &widgets.leaflet, "can-navigate-back")
+            .flags(glib::BindingFlags::SYNC_CREATE)
+            .flags(glib::BindingFlags::INVERT_BOOLEAN)
+            .build();
 
         AsyncComponentParts { model, widgets }
     }
 
     async fn pre_view() {
         // widgets.leaflet.navigate(adw::NavigationDirection::Forward);
+    }
+
+    async fn update_with_view(&mut self, widgets: &mut Self::Widgets, msg: Self::Input, _sender: AsyncComponentSender<Self>, _root: &Self::Root) {
+        match msg {
+            Self::Input::GoBack => {
+                log::info!("Go Back");
+
+                widgets.leaflet.navigate(adw::NavigationDirection::Back);
+                widgets.listbox.set_visible(true);
+                // widgets.leaflet.set_property("can-navigate-back", true);
+            }
+
+            Self::Input::SelectRow(row) => {
+                log::info!("Select Row");
+
+                widgets.listbox.select_row(Some(row).as_ref());
+                widgets.listbox.set_visible(false);
+                // widgets.leaflet.set_property("can-navigate-back", false);
+            }
+        }
     }
 }
 

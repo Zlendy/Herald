@@ -12,6 +12,8 @@ pub struct MessageModel { // MessageExternal Model
 }
 
 impl MessageModel {
+
+    #[allow(dead_code)]
     pub fn new(id: i64, title: String, message: String) -> Self {
         Self {
             appid: 0,

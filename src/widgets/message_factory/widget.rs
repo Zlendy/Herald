@@ -1,7 +1,6 @@
 use std::time::Duration;
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 
-use libadwaita::gtk::pango;
 use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
 };
@@ -126,7 +125,7 @@ pub struct MessageFactory {
 #[derive(Debug)]
 pub enum FactoryMsg {
     AddDefaultMessage,
-    AddMessage(MessageModel),
+    AddMessageBack(MessageModel),
     RemoveMessage,
     Remove(DynamicIndex),
 }
@@ -194,8 +193,8 @@ impl SimpleComponent for MessageFactory {
             FactoryMsg::AddDefaultMessage => {
                 guard.push_front(self.default_widget.clone());
             }
-            FactoryMsg::AddMessage(model) => {
-                guard.push_front(model);
+            FactoryMsg::AddMessageBack(model) => {
+                guard.push_back(model);
             }
             FactoryMsg::RemoveMessage => {
                 guard.pop_front();
