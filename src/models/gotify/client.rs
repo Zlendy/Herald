@@ -1,10 +1,13 @@
 use serde_derive::{Serialize, Deserialize};
+use serde_json::Value;
 
-#[derive(Serialize, Deserialize)]
+use super::error::ErrorModel;
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ClientModel {
-    id: Option<i32>,
-    name: String,
-    token: Option<String>,
+    pub id: Option<i32>,
+    pub name: String,
+    pub token: Option<String>,
 }
 
 impl ClientModel {
@@ -15,4 +18,10 @@ impl ClientModel {
             token: None,
         }
     }
+}
+
+pub enum CreateClientEnum {
+    Success(ClientModel),
+    Error(ErrorModel),
+    Unmatched(Value),
 }

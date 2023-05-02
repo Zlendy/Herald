@@ -8,7 +8,7 @@ use relm4::{
 use serde_derive::{Serialize, Deserialize};
 use serde_json::Value;
 
-const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
+use crate::{models::gotify::client::{ClientModel, CreateClientEnum}, services::gotify::GotifyService};
 
 pub struct LoginWidget {
     #[allow(dead_code)]
@@ -82,20 +82,25 @@ impl AsyncComponent for LoginWidget {
     ) {
         if msg != LoginMsg::Login { return; } // Only process "Login" events
 
-
-        log::info!("Username: \"{}\". Password: \"{}\"", &self.username, &self.password);
-        let response = LoginWidget::create_client(self.username.as_str(), self.password.as_str()).await.unwrap();
-            log::info!("{:#?}", &response);
-
-            match response.get("token").cloned() { // TODO: Fix extra brackets
-                Some(token) => {
-                    log::info!("{}", token);
-                    self.token = token.to_string();
-                },
-                None => {
-                    log::error!("Invalid credentials")
+        let possibilities = GotifyService::create_client(self.username.as_str(), self.password.as_str()).await;
+        match possibilities {
+            CreateClientEnum::Success(model) => {
+                match model.token {
+                    Some(token) => {
+                        self.token = token;
+                    }
+                    None => {
+                        log::error!("Token is None");
+                    }
                 }
+            },
+            CreateClientEnum::Error(model) => {
+                // TODO: Show toast
+            },
+            _ => {
+                // TODO: Show toast
             }
+        }
     }
 
     async fn update(
@@ -130,44 +135,5 @@ impl AsyncComponent for LoginWidget {
         let widgets = view_output!();
 
         AsyncComponentParts { model, widgets }
-    }
-
-    fn pre_view() {
-        // widgets.leaflet.navigate(adw::NavigationDirection::Forward);
-    }
-}
-
-impl LoginWidget {
-    pub async fn create_client(username: &str, password: &str) -> Result<Value, Box<dyn std::error::Error>> {
-        let body: ClientModel = ClientModel::new("Herald");
-
-        let client = reqwest::Client::new()
-            .post(format!("{}/client", GOTIFY))
-            .basic_auth(username, Some(password))
-            .json::<ClientModel>(&body);
-
-        let resp = client.send()
-            .await?
-            .json::<Value>()
-            .await?;
-
-        Ok(resp)
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-struct ClientModel {
-    id: Option<i32>,
-    name: String,
-    token: Option<String>,
-}
-
-impl ClientModel {
-    pub fn new(name: &str) -> Self {
-        Self {
-            id: None,
-            name: name.to_string(),
-            token: None,
-        }
     }
 }

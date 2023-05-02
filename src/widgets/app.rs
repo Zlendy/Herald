@@ -1,3 +1,4 @@
+use crate::services::gotify::GotifyService;
 use crate::widgets::about_dialog::AboutDialog;
 use crate::widgets::login::widget::LoginWidget;
 use crate::widgets::message_container::widget::MessageContainerWidget;
@@ -23,7 +24,7 @@ pub struct App {
 
 #[relm4::component(pub async)]
 impl AsyncComponent for App {
-    type Init = ();
+    type Init = GotifyService;
     type Input = ();
     type Output = ();
     type CommandOutput = ();

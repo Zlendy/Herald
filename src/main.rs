@@ -11,8 +11,9 @@ use services::gotify::GotifyService;
 fn main() {
     env_logger::init();
     dotenv().ok();
-    let mut gotify_service: Option<GotifyService> = None;
+
+    let mut gotify_service = GotifyService::new();
 
     let app = RelmApp::new("io.github.zlendy.herald");
-    app.run_async::<App>(());
+    app.run_async::<App>(gotify_service);
 }
