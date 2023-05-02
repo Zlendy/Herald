@@ -1,8 +1,18 @@
-use serde_json::Value;
+use std::sync::{Arc, Mutex, MutexGuard};
 
-use crate::models::gotify::{client::{ClientModel, CreateClientEnum}, error::ErrorModel};
+use serde_json::Value;
+use lazy_static::lazy_static;
+
+use crate::models::gotify::{
+    client::{ClientModel, CreateClientEnum},
+    error::ErrorModel,
+};
 
 const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
+
+lazy_static! {
+    pub static ref GOTIFY_SERVICE: Arc<Mutex<GotifyService>> = Arc::new(Mutex::new(GotifyService::new()));
+}
 
 pub struct GotifyService {
     pub url: Option<String>,
@@ -10,28 +20,27 @@ pub struct GotifyService {
 }
 
 impl GotifyService {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             url: None,
             token: None,
         }
     }
 
-    pub async fn set_url(url: String) {
-        
+    pub fn instance() -> MutexGuard<'static, GotifyService>{
+        return GOTIFY_SERVICE.lock().unwrap()
     }
 
-    pub async fn create_client(
-        username: &str,
-        password: &str,
-    ) -> CreateClientEnum {
+    pub async fn set_url(url: String) {}
+
+    pub async fn create_client(&mut self, username: &str, password: &str) -> CreateClientEnum {
         let body = ClientModel::new("Herald");
-    
+
         let client = reqwest::Client::new()
             .post(format!("{}/client", GOTIFY))
             .basic_auth(username, Some(password))
             .json::<ClientModel>(&body);
-    
+
         let result = client.send().await;
 
         let Ok(response) = result else {
@@ -56,6 +65,7 @@ impl GotifyService {
         if status.is_success() {
             let model: ClientModel = serde_json::from_value(value.clone()).unwrap();
             log::info!("Created client \"{}\"", model.name);
+            self.token = model.token.clone();
 
             return CreateClientEnum::Success(model);
         }

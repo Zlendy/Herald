@@ -8,7 +8,7 @@ use relm4::{
 use serde_derive::{Serialize, Deserialize};
 use serde_json::Value;
 
-use crate::{models::gotify::client::{ClientModel, CreateClientEnum}, services::gotify::GotifyService};
+use crate::{models::gotify::client::{ClientModel, CreateClientEnum}, services::gotify::GotifyService, widgets::app::App};
 
 pub struct LoginWidget {
     #[allow(dead_code)]
@@ -82,7 +82,7 @@ impl AsyncComponent for LoginWidget {
     ) {
         if msg != LoginMsg::Login { return; } // Only process "Login" events
 
-        let possibilities = GotifyService::create_client(self.username.as_str(), self.password.as_str()).await;
+        let possibilities = GotifyService::instance().create_client(self.username.as_str(), self.password.as_str()).await;
         match possibilities {
             CreateClientEnum::Success(model) => {
                 match model.token {
