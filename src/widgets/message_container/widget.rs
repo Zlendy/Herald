@@ -6,7 +6,7 @@ use gtk::prelude::*;
 use relm4::gtk;
 use serde_json::Value;
 use crate::widgets::{message_factory::widget::{MessageFactory, FactoryMsg}};
-use crate::widgets::message_factory::models::MessageModel;
+use crate::models::gotify::message::MessageModel;
 // use crate::widgets::app::App;
 const GOTIFY: &str = "http://monitoring.beauvoir.local/gotify";
 
@@ -66,13 +66,16 @@ impl AsyncComponent for MessageContainerWidget {
                 },
             },
 
-            #[name = "content"]
             #[wrap(Some)]
-            set_content = &gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                set_hexpand: true,
-                
-                // Child
+            set_content = &adw::Clamp {
+
+                #[name = "content"]
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_hexpand: true,
+                    
+                    // Child
+                }
             },
         }
     }

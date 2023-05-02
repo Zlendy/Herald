@@ -1,4 +1,4 @@
-use serde_derive::Deserialize;
+use serde_derive::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct MessageModel { // MessageExternal Model
@@ -12,7 +12,6 @@ pub struct MessageModel { // MessageExternal Model
 }
 
 impl MessageModel {
-
     #[allow(dead_code)]
     pub fn new(id: i64, title: String, message: String) -> Self {
         Self {

@@ -7,7 +7,7 @@ use relm4::factory::{
 use relm4::loading_widgets::LoadingWidgets;
 use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
 
-use super::models::MessageModel;
+use crate::models::gotify::message::MessageModel;
 
 #[derive(Debug)]
 pub enum MessageComponentOutput {

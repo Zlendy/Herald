@@ -33,41 +33,43 @@ impl AsyncComponent for LoginWidget {
     type CommandOutput = LoginMsg;
 
     view! {
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-            set_hexpand: true,
-
-            adw::EntryRow {
-                set_title: "Username",
-                connect_changed[sender] => move |entry| {
-                    let text = entry.text().to_string();
-                    sender.input(LoginMsg::SetUsername(text));
+        adw::Clamp {
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
+                set_hexpand: true,
+    
+                adw::EntryRow {
+                    set_title: "Username",
+                    connect_changed[sender] => move |entry| {
+                        let text = entry.text().to_string();
+                        sender.input(LoginMsg::SetUsername(text));
+                    },
                 },
-            },
-
-            adw::PasswordEntryRow {
-                set_title: "Password",
-                connect_changed[sender] => move |entry| {
-                    let text = entry.text().to_string();
-                    sender.input(LoginMsg::SetPassword(text));
+    
+                adw::PasswordEntryRow {
+                    set_title: "Password",
+                    connect_changed[sender] => move |entry| {
+                        let text = entry.text().to_string();
+                        sender.input(LoginMsg::SetPassword(text));
+                    },
                 },
-            },
-
-            gtk::Button {
-                set_label: "Login",
-
-                connect_clicked[sender] => move |_| {
-                    sender.oneshot_command(async move {
-                        LoginMsg::Login
-                    })
+    
+                gtk::Button {
+                    set_label: "Login",
+    
+                    connect_clicked[sender] => move |_| {
+                        sender.oneshot_command(async move {
+                            LoginMsg::Login
+                        })
+                    },
                 },
-            },
-
-
-            gtk::Label {
-                set_margin_all: 5,
-                #[watch]
-                set_label: &format!("Token: \"{}\"", model.token),
+    
+    
+                gtk::Label {
+                    set_margin_all: 5,
+                    #[watch]
+                    set_label: &format!("Token: \"{}\"", model.token),
+                },
             },
         }
     }
