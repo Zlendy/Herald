@@ -1,7 +1,7 @@
 use std::env;
 
 use relm4::{adw, Component, factory::FactoryView, ComponentController, component::{Connector, AsyncComponent, AsyncComponentParts}, AsyncComponentSender};
-use adw::{traits::PreferencesRowExt, gtk::ListBoxRow, glib};
+use adw::{traits::PreferencesRowExt, gtk::ListBoxRow};
 use gtk::prelude::*;
 use relm4::gtk;
 use serde_json::Value;
@@ -18,7 +18,6 @@ pub struct MessageContainerWidget {
 
 #[derive(Debug)]
 pub enum MessageContainerSignals {
-    GoBack,
     SelectRow(ListBoxRow),
 }
 
@@ -30,21 +29,17 @@ impl AsyncComponent for MessageContainerWidget {
     type CommandOutput = ();
 
     view! {
-        #[name = "leaflet"]
-        adw::Leaflet {
-            set_can_navigate_back: false,
+        #[name = "flap"]
+        adw::Flap {
+            set_swipe_to_open: true,
+            set_swipe_to_close: true,
 
-            gtk::Box {
+            #[wrap(Some)]
+            set_flap = &gtk::Box {
+                set_width_request: 200,
+                set_css_classes: &["background"],
                 set_orientation: gtk::Orientation::Vertical,
                 set_vexpand: true,
-
-                // #[name = "sidebar_header"]
-                //     adw::HeaderBar {
-                //         #[wrap(Some)]
-                //         set_title_widget = &adw::WindowTitle {
-                //             set_title: "Sidebar",
-                //     }
-                // },
 
                 #[name = "listbox"]
                 gtk::ListBox {
@@ -72,7 +67,8 @@ impl AsyncComponent for MessageContainerWidget {
             },
 
             #[name = "content"]
-            gtk::Box {
+            #[wrap(Some)]
+            set_content = &gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
                 set_hexpand: true,
                 
@@ -107,36 +103,13 @@ impl AsyncComponent for MessageContainerWidget {
             .content
             .factory_append(model.factory.widget(), &());
 
-        widgets
-            .listbox
-            .bind_property("visible", &widgets.leaflet, "can-navigate-back")
-            .flags(glib::BindingFlags::SYNC_CREATE)
-            .flags(glib::BindingFlags::INVERT_BOOLEAN)
-            .build();
-
         AsyncComponentParts { model, widgets }
     }
 
-    async fn pre_view() {
-        // widgets.leaflet.navigate(adw::NavigationDirection::Forward);
-    }
-
-    async fn update_with_view(&mut self, widgets: &mut Self::Widgets, msg: Self::Input, _sender: AsyncComponentSender<Self>, _root: &Self::Root) {
+    async fn update_with_view(&mut self, _widgets: &mut Self::Widgets, msg: Self::Input, _sender: AsyncComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            Self::Input::GoBack => {
-                log::info!("Go Back");
-
-                widgets.leaflet.navigate(adw::NavigationDirection::Back);
-                widgets.listbox.set_visible(true);
-                // widgets.leaflet.set_property("can-navigate-back", true);
-            }
-
             Self::Input::SelectRow(row) => {
-                log::info!("Select Row");
-
-                widgets.listbox.select_row(Some(row).as_ref());
-                widgets.listbox.set_visible(false);
-                // widgets.leaflet.set_property("can-navigate-back", false);
+                log::info!("Select Row: \"{}\"", row.index());
             }
         }
     }

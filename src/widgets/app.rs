@@ -15,9 +15,6 @@ use relm4::{
     gtk,
 };
 
-
-use crate::widgets::message_container::widget::MessageContainerSignals;
-
 pub struct App {
     login: AsyncConnector<LoginWidget>,
     message_container: AsyncConnector<MessageContainerWidget>,
@@ -44,9 +41,10 @@ impl AsyncComponent for App {
 
                 #[name = "content_header"]
                 adw::HeaderBar {
-                    #[name = "back_button"]
-                    pack_start = &gtk::Button {
-                        set_icon_name: "go-previous-symbolic",
+                    #[name = "sidebar_button"]
+                    pack_start = &gtk::ToggleButton {
+                        set_icon_name: "sidebar-show-symbolic",
+                        set_active: true,
                         // set_visible: false,
 
                         // connect_clicked[leaflet] => move |_| {
@@ -141,19 +139,11 @@ impl AsyncComponent for App {
         let widgets: AppWidgets = view_output!();
 
         widgets
-            .back_button
-            .bind_property("visible", model.message_container.widget(), "can-navigate-back")
+            .sidebar_button
+            .bind_property("active", model.message_container.widget(), "reveal-flap")
             .flags(glib::BindingFlags::SYNC_CREATE)
-            // .flags(glib::BindingFlags::INVERT_BOOLEAN)
+            .flags(gtk::glib::BindingFlags::BIDIRECTIONAL)
             .build();
-
-        let message_container_sender = model.message_container.sender().to_owned();
-        widgets
-            .back_button
-            .connect_clicked(move |_| {
-                log::info!("Go Back");
-                message_container_sender.send(MessageContainerSignals::GoBack).unwrap_or_default();
-            });
 
         let actions = RelmActionGroup::<WindowActionGroup>::new();
 
@@ -184,7 +174,6 @@ impl AsyncComponent for App {
             .switcher_title
             .bind_property("title-visible", &widgets.switcher_bar, "reveal")
             .flags(gtk::glib::BindingFlags::SYNC_CREATE)
-            // .flags(gtk::glib::BindingFlags::BIDIRECTIONAL)
             .build();
 
         widgets.main_window.insert_action_group(

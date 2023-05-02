@@ -38,7 +38,10 @@ impl AsyncFactoryComponent for MessageModel {
                         set_hexpand: true,
 
                         gtk::Label {
+                            set_can_focus: false,
+                            set_wrap: true,
                             set_hexpand: true,
+
                             set_halign: gtk::Align::Start,
 
                             set_use_markup: true,
