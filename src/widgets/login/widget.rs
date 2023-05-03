@@ -1,18 +1,20 @@
-use relm4::adw;
+use std::env;
+
 use adw::traits::PreferencesRowExt;
 use gtk::prelude::*;
+use relm4::adw;
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
     gtk, RelmWidgetExt,
 };
-use serde_derive::{Serialize, Deserialize};
-use serde_json::Value;
 
-use crate::{models::gotify::client::{ClientModel, CreateClientEnum}, services::gotify::GotifyService, widgets::app::App};
+use crate::{models::gotify::client::CreateClientEnum, services::gotify::GotifyService};
 
 pub struct LoginWidget {
     #[allow(dead_code)]
     current_section: u32, // Unused for now
+
+    server_url: String,
     username: String,
     password: String,
     token: String,
@@ -21,6 +23,7 @@ pub struct LoginWidget {
 #[derive(Debug, PartialEq)]
 pub enum LoginMsg {
     Login,
+    SetServerUrl(String),
     SetUsername(String),
     SetPassword(String),
 }
@@ -37,7 +40,16 @@ impl AsyncComponent for LoginWidget {
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
                 set_hexpand: true,
-    
+
+                adw::EntryRow {
+                    set_title: "Server URL",
+                    set_text: model.server_url.as_str(),
+                    connect_changed[sender] => move |entry| {
+                        let text = entry.text().to_string();
+                        sender.input(LoginMsg::SetUsername(text));
+                    },
+                },
+
                 adw::EntryRow {
                     set_title: "Username",
                     connect_changed[sender] => move |entry| {
@@ -45,7 +57,7 @@ impl AsyncComponent for LoginWidget {
                         sender.input(LoginMsg::SetUsername(text));
                     },
                 },
-    
+
                 adw::PasswordEntryRow {
                     set_title: "Password",
                     connect_changed[sender] => move |entry| {
@@ -53,18 +65,18 @@ impl AsyncComponent for LoginWidget {
                         sender.input(LoginMsg::SetPassword(text));
                     },
                 },
-    
+
                 gtk::Button {
                     set_label: "Login",
-    
+
                     connect_clicked[sender] => move |_| {
                         sender.oneshot_command(async move {
                             LoginMsg::Login
                         })
                     },
                 },
-    
-    
+
+
                 gtk::Label {
                     set_margin_all: 5,
                     #[watch]
@@ -80,23 +92,30 @@ impl AsyncComponent for LoginWidget {
         _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        if msg != LoginMsg::Login { return; } // Only process "Login" events
+        if msg != LoginMsg::Login {
+            return;
+        } // Only process "Login" events
 
-        let possibilities = GotifyService::instance().create_client(self.username.as_str(), self.password.as_str()).await;
+        let Ok(_) = GotifyService::instance().set_base_url(self.server_url.clone()).await else {
+            return; // Stop code execution
+        };
+
+        let possibilities = GotifyService::instance()
+            .create_client(self.username.as_str(), self.password.as_str())
+            .await;
+
         match possibilities {
-            CreateClientEnum::Success(model) => {
-                match model.token {
-                    Some(token) => {
-                        self.token = token;
-                    }
-                    None => {
-                        log::error!("Token is None");
-                    }
+            CreateClientEnum::Success(model) => match model.token {
+                Some(token) => {
+                    self.token = token;
+                }
+                None => {
+                    log::error!("Token is None");
                 }
             },
             CreateClientEnum::Error(model) => {
                 // TODO: Show toast
-            },
+            }
             _ => {
                 // TODO: Show toast
             }
@@ -112,10 +131,13 @@ impl AsyncComponent for LoginWidget {
         match msg {
             LoginMsg::SetUsername(username) => {
                 self.username = username;
-            },
+            }
             LoginMsg::SetPassword(password) => {
                 self.password = password;
-            },
+            }
+            LoginMsg::SetServerUrl(server_url) => {
+                self.server_url = server_url;
+            }
             _ => {}
         }
     }
@@ -123,13 +145,14 @@ impl AsyncComponent for LoginWidget {
     async fn init(
         _init: Self::Init,
         root: Self::Root,
-        sender: AsyncComponentSender<Self>
+        sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
         let model = LoginWidget {
             current_section: 1,
-            username: String::from(""),
-            password: String::from(""),
-            token: String::from(""),
+            server_url: env::var("BASE_URL").unwrap_or_default(),
+            username: "".to_string(),
+            password: "".to_string(),
+            token: "".to_string(),
         };
 
         let widgets = view_output!();

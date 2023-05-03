@@ -3,12 +3,12 @@ use crate::widgets::login::widget::LoginWidget;
 use crate::widgets::message_container::widget::MessageContainerWidget;
 
 use adw::glib;
-use relm4::actions::{RelmActionGroup, RelmAction, ActionGroupName};
+use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};
 use relm4::ComponentController;
 
-use relm4::{adw, Controller, ComponentBuilder};
 use gtk::prelude::*;
 use relm4::component::{AsyncComponentController, AsyncConnector};
+use relm4::{adw, ComponentBuilder, Controller};
 
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
@@ -18,7 +18,7 @@ use relm4::{
 pub struct App {
     login: AsyncConnector<LoginWidget>,
     message_container: AsyncConnector<MessageContainerWidget>,
-    about_dialog: Option<Controller<AboutDialog>>
+    about_dialog: Option<Controller<AboutDialog>>,
 }
 
 #[relm4::component(pub async)]
@@ -62,7 +62,7 @@ impl AsyncComponent for App {
                     #[name = "menu"]
                     pack_end = &gtk::MenuButton {
                         set_icon_name: "open-menu-symbolic",
-                        
+
                         #[wrap(Some)]
                         set_popover = &gtk::PopoverMenu::from_model(Some(&main_menu)) {
                             // add_child: (&popover_child, "my_widget"),
@@ -73,9 +73,9 @@ impl AsyncComponent for App {
                 #[name = "stack"]
                 adw::ViewStack {
                     add_titled_with_icon: (model.login.widget(), Some("login"), "Login", "padlock2-symbolic"),
-                    add_titled_with_icon: (model.message_container.widget(), Some("messages"), "Messages", "chat-bubble-text-symbolic"),
+                    // add_titled_with_icon: (model.message_container.widget(), Some("messages"), "Messages", "chat-bubble-text-symbolic"),
                 },
-                
+
                 #[name = "switcher_bar"]
                 adw::ViewSwitcherBar {
                     // set_reveal: true,
@@ -125,7 +125,7 @@ impl AsyncComponent for App {
     async fn init(
         _init: Self::Init,
         root: Self::Root,
-        _sender: AsyncComponentSender<Self>
+        _sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
         let login = LoginWidget::builder().launch(());
         let message_container = MessageContainerWidget::builder().launch(());
@@ -148,27 +148,23 @@ impl AsyncComponent for App {
         let actions = RelmActionGroup::<WindowActionGroup>::new();
 
         let about_dialog = ComponentBuilder::default()
-			.launch(widgets.main_window.upcast_ref::<gtk::Window>().clone())
-			.detach();
+            .launch(widgets.main_window.upcast_ref::<gtk::Window>().clone())
+            .detach();
 
         model.about_dialog = Some(about_dialog);
 
         let about_action = {
             let sender = model.about_dialog.as_ref().unwrap().sender().clone();
-			RelmAction::<AboutAction>::new_stateless(move |_| {
-				sender.send(()).unwrap_or_default();
-			})
+            RelmAction::<AboutAction>::new_stateless(move |_| {
+                sender.send(()).unwrap_or_default();
+            })
         };
-        
+
         actions.add_action(&about_action);
 
-        widgets
-            .switcher_bar
-            .set_stack(Some(&widgets.stack));
+        widgets.switcher_bar.set_stack(Some(&widgets.stack));
 
-        widgets
-            .switcher_title
-            .set_stack(Some(&widgets.stack));
+        widgets.switcher_title.set_stack(Some(&widgets.stack));
 
         widgets
             .switcher_title
@@ -176,10 +172,9 @@ impl AsyncComponent for App {
             .flags(gtk::glib::BindingFlags::SYNC_CREATE)
             .build();
 
-        widgets.main_window.insert_action_group(
-			WindowActionGroup::NAME,
-			Some(&actions.into_action_group()),
-		);
+        widgets
+            .main_window
+            .insert_action_group(WindowActionGroup::NAME, Some(&actions.into_action_group()));
 
         AsyncComponentParts { model, widgets }
     }
