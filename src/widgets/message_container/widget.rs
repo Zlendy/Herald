@@ -12,7 +12,6 @@ use relm4::{
     factory::FactoryView,
     AsyncComponentSender, Component, ComponentController,
 };
-use serde_json::Value;
 
 pub struct MessageContainerWidget {
     #[allow(dead_code)]
@@ -23,6 +22,7 @@ pub struct MessageContainerWidget {
 #[derive(Debug)]
 pub enum MessageContainerSignals {
     SelectRow(ListBoxRow),
+    LoadMessages,
 }
 
 #[relm4::component(pub async)]
@@ -91,17 +91,6 @@ impl AsyncComponent for MessageContainerWidget {
     ) -> AsyncComponentParts<Self> {
         let factory = MessageFactory::builder().launch(MessageModel::default());
 
-        // TODO: Fix
-        // match GotifyService::instance().get_messages().await {
-        //     Ok(paged_messages) => {
-        //         for message in paged_messages.messages {
-        //             // log::info!("{:#?}", message);
-        //             factory.emit(FactoryMsg::AddMessageBack(message));
-        //         }
-        //     }
-        //     Err(_) => {}
-        // }
-
         let model = MessageContainerWidget {
             current_section: 1,
             factory,
@@ -125,6 +114,15 @@ impl AsyncComponent for MessageContainerWidget {
             Self::Input::SelectRow(row) => {
                 log::info!("Select Row: \"{}\"", row.index());
             }
+            Self::Input::LoadMessages => match GotifyService::instance().get_messages().await {
+                Ok(paged_messages) => {
+                    for message in paged_messages.messages {
+                        log::debug!("{:#?}", message);
+                        self.factory.emit(FactoryMsg::AddMessageBack(message));
+                    }
+                }
+                Err(_) => {}
+            },
         }
     }
 }

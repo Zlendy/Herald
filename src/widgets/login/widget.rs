@@ -2,13 +2,13 @@ use std::env;
 
 use adw::traits::PreferencesRowExt;
 use gtk::prelude::*;
-use relm4::{adw, WidgetRef};
+use relm4::adw;
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
     gtk, RelmWidgetExt,
 };
 
-use crate::widgets::app::AppActions;
+use crate::widgets::app::GlobalActions;
 use crate::{models::gotify::client::CreateClientEnum, services::gotify::GotifyService};
 
 pub struct LoginWidget {
@@ -33,7 +33,7 @@ pub enum LoginMsg {
 impl AsyncComponent for LoginWidget {
     type Init = ();
     type Input = LoginMsg;
-    type Output = ();
+    type Output = GlobalActions;
     type CommandOutput = LoginMsg;
 
     view! {
@@ -111,7 +111,13 @@ impl AsyncComponent for LoginWidget {
             CreateClientEnum::Success(model) => match model.token {
                 Some(token) => {
                     self.token = token;
-                    // let window = root.toplevel_window().unwrap().widget_ref().to_owned();
+                    // let window = root.toplevel_window()
+                    // MESSAGE_BROKER
+                    //     .sender()
+                    //     .send(GlobalActions::ViewStackLoggedIn)
+                    //     .unwrap();
+
+                    sender.output_sender().emit(GlobalActions::LogIn);
                     // sender.input_sender()
                     // sender.input(message)
                 }

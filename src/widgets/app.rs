@@ -1,38 +1,33 @@
 use crate::widgets::about_dialog::AboutDialog;
 use crate::widgets::login::widget::LoginWidget;
-use crate::widgets::message_container::widget::MessageContainerWidget;
+use crate::widgets::message_container::widget::{MessageContainerSignals, MessageContainerWidget};
 
-use adw::glib;
+use adw::{glib, Window};
 use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};
-use relm4::{ComponentController, MessageBroker, SimpleComponent, Worker};
+use relm4::{Component, ComponentController, ComponentParts, ComponentSender};
 
 use gtk::prelude::*;
-use relm4::component::{AsyncComponentController, AsyncConnector};
+use relm4::component::{AsyncComponentController, AsyncConnector, AsyncController};
 use relm4::{adw, ComponentBuilder, Controller};
 
-use relm4::{
-    component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
-    gtk,
-};
+use relm4::{component::AsyncComponent, gtk};
 
 #[derive(Debug)]
-pub enum AppActions {
-    ViewStackLoggedIn,
-    ViewStackLoggedOut,
+pub enum GlobalActions {
+    LogIn,
+    LogOut,
 }
 
-// static HEADER_BROKER: MessageBroker<App> = MessageBroker::new();
-
 pub struct App {
-    login: AsyncConnector<LoginWidget>,
+    login: AsyncController<LoginWidget>,
     message_container: AsyncConnector<MessageContainerWidget>,
     about_dialog: Option<Controller<AboutDialog>>,
 }
 
-#[relm4::component(pub async)]
-impl AsyncComponent for App {
+#[relm4::component(pub)]
+impl Component for App {
     type Init = ();
-    type Input = AppActions;
+    type Input = GlobalActions;
     type Output = ();
     type CommandOutput = ();
 
@@ -130,18 +125,23 @@ impl AsyncComponent for App {
         }
     }
 
-    async fn init(
+    fn init(
         _init: Self::Init,
-        root: Self::Root,
-        sender: AsyncComponentSender<Self>,
-    ) -> AsyncComponentParts<Self> {
+        root: &Window,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
         // Main
 
         let login = LoginWidget::builder().launch(());
         let message_container = MessageContainerWidget::builder().launch(());
 
+        let input_sender = sender.input_sender().to_owned();
+        let login_controller = login.connect_receiver(move |_, message| {
+            input_sender.emit(message);
+        });
+
         let mut model = App {
-            login,
+            login: login_controller,
             message_container,
             about_dialog: None,
         };
@@ -168,10 +168,7 @@ impl AsyncComponent for App {
 
         // Stack
 
-        sender
-            .input_sender()
-            .send(Self::Input::ViewStackLoggedOut)
-            .unwrap(); // TODO: Log back in automatically (Token stored in SQLite)
+        sender.input_sender().send(Self::Input::LogOut).unwrap(); // TODO: Log back in automatically (Token stored in SQLite)
         widgets.switcher_bar.set_stack(Some(&widgets.stack));
         widgets.switcher_title.set_stack(Some(&widgets.stack));
 
@@ -196,18 +193,20 @@ impl AsyncComponent for App {
             .main_window
             .insert_action_group(WindowActionGroup::NAME, Some(&actions.into_action_group()));
 
-        AsyncComponentParts { model, widgets }
+        ComponentParts { model, widgets }
     }
 
-    async fn update_with_view(
+    fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
         msg: Self::Input,
-        _sender: AsyncComponentSender<Self>,
+        _sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
-            Self::Input::ViewStackLoggedIn => {
+            Self::Input::LogIn => {
+                log::info!("Logged in.");
+
                 widgets.stack.remove(self.login.widget());
                 widgets.stack.add_titled_with_icon(
                     self.message_container.widget(),
@@ -215,8 +214,14 @@ impl AsyncComponent for App {
                     "Messages",
                     "chat-bubble-text-symbolic",
                 );
+
+                self.message_container
+                    .sender()
+                    .emit(MessageContainerSignals::LoadMessages);
             }
-            Self::Input::ViewStackLoggedOut => {
+            Self::Input::LogOut => {
+                log::info!("Logged out.");
+
                 widgets.stack.add_titled_with_icon(
                     self.login.widget(),
                     Some("login"),

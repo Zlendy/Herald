@@ -12,5 +12,5 @@ fn main() {
     dotenv().ok();
 
     let app = RelmApp::new("io.github.zlendy.herald");
-    app.run_async::<App>(());
+    app.run::<App>(());
 }

@@ -132,13 +132,15 @@ impl GotifyService {
     pub async fn get_messages(&self) -> Result<PagedMessagesModel, Box<dyn std::error::Error>> {
         let value = self.request_auth(Method::GET, "/message".to_string()).await;
 
+        log::debug!("{}", value);
+
         match serde_json::from_value::<PagedMessagesModel>(value) {
             Ok(messages) => {
                 log::info!("Retrieved messages");
                 return Ok(messages);
             }
             Err(err) => {
-                log::error!("{}", err);
+                log::error!("get_messages: {}", err);
                 return Err(Box::new(err));
             }
         }
