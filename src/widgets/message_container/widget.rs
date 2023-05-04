@@ -1,5 +1,3 @@
-use std::env;
-
 use crate::models::gotify::message::MessageModel;
 use crate::services::gotify::GotifyService;
 use crate::widgets::message_factory::widget::{FactoryMsg, MessageFactory};

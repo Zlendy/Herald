@@ -2,7 +2,7 @@ use crate::widgets::about_dialog::AboutDialog;
 use crate::widgets::login::widget::LoginWidget;
 use crate::widgets::message_container::widget::{MessageContainerSignals, MessageContainerWidget};
 
-use adw::{glib, Window};
+use adw::{glib, Toast, Window};
 use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};
 use relm4::{Component, ComponentController, ComponentParts, ComponentSender};
 
@@ -16,6 +16,7 @@ use relm4::{component::AsyncComponent, gtk};
 pub enum GlobalActions {
     LogIn,
     LogOut,
+    ShowToast(Toast),
 }
 
 pub struct App {
@@ -77,6 +78,11 @@ impl Component for App {
                 adw::ViewStack {
                     // add_titled_with_icon: (model.login.widget(), Some("login"), "Login", "padlock2-symbolic"),
                     // add_titled_with_icon: (model.message_container.widget(), Some("messages"), "Messages", "chat-bubble-text-symbolic"),
+                },
+
+                #[name = "toast_overlay"]
+                adw::ToastOverlay {
+
                 },
 
                 #[name = "switcher_bar"]
@@ -168,7 +174,6 @@ impl Component for App {
 
         // Stack
 
-        sender.input_sender().send(Self::Input::LogOut).unwrap(); // TODO: Log back in automatically (Token stored in SQLite)
         widgets.switcher_bar.set_stack(Some(&widgets.stack));
         widgets.switcher_title.set_stack(Some(&widgets.stack));
 
@@ -187,6 +192,10 @@ impl Component for App {
             .flags(gtk::glib::BindingFlags::BIDIRECTIONAL)
             .build();
 
+        // Events
+
+        sender.input(Self::Input::LogOut); // TODO: Log back in automatically (Token stored in SQLite)
+
         // Etc
 
         widgets
@@ -204,7 +213,7 @@ impl Component for App {
         _root: &Self::Root,
     ) {
         match msg {
-            Self::Input::LogIn => {
+            GlobalActions::LogIn => {
                 log::info!("Logged in.");
 
                 widgets.stack.remove(self.login.widget());
@@ -219,7 +228,7 @@ impl Component for App {
                     .sender()
                     .emit(MessageContainerSignals::LoadMessages);
             }
-            Self::Input::LogOut => {
+            GlobalActions::LogOut => {
                 log::info!("Logged out.");
 
                 widgets.stack.add_titled_with_icon(
@@ -229,6 +238,9 @@ impl Component for App {
                     "padlock2-symbolic",
                 );
                 widgets.stack.remove(self.message_container.widget());
+            }
+            GlobalActions::ShowToast(toast) => {
+                widgets.toast_overlay.add_toast(&toast);
             }
         }
     }

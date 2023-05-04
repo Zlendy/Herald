@@ -1,5 +1,6 @@
 use std::env;
 
+use adw::builders::ToastBuilder;
 use adw::traits::PreferencesRowExt;
 use gtk::prelude::*;
 use relm4::adw;
@@ -47,7 +48,7 @@ impl AsyncComponent for LoginWidget {
                     set_text: model.server_url.as_str(),
                     connect_changed[sender] => move |entry| {
                         let text = entry.text().to_string();
-                        sender.input(LoginMsg::SetUsername(text));
+                        sender.input(LoginMsg::SetServerUrl(text));
                     },
                 },
 
@@ -93,7 +94,7 @@ impl AsyncComponent for LoginWidget {
         &mut self,
         msg: LoginMsg,
         sender: AsyncComponentSender<Self>,
-        root: &Self::Root,
+        _root: &Self::Root,
     ) {
         if msg != LoginMsg::Login {
             return;
@@ -126,11 +127,10 @@ impl AsyncComponent for LoginWidget {
                 }
             },
             CreateClientEnum::Error(model) => {
-                // TODO: Show toast
+                let toast = ToastBuilder::new().title(&model.error_descripton).build();
+                sender.output(GlobalActions::ShowToast(toast)).unwrap();
             }
-            _ => {
-                // TODO: Show toast
-            }
+            _ => {}
         }
     }
 
