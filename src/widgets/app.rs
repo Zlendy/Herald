@@ -4,7 +4,7 @@ use crate::widgets::message_container::widget::MessageContainerWidget;
 
 use adw::glib;
 use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};
-use relm4::ComponentController;
+use relm4::{ComponentController, MessageBroker, SimpleComponent, Worker};
 
 use gtk::prelude::*;
 use relm4::component::{AsyncComponentController, AsyncConnector};
@@ -15,6 +15,14 @@ use relm4::{
     gtk,
 };
 
+#[derive(Debug)]
+pub enum AppActions {
+    ViewStackLoggedIn,
+    ViewStackLoggedOut,
+}
+
+// static HEADER_BROKER: MessageBroker<App> = MessageBroker::new();
+
 pub struct App {
     login: AsyncConnector<LoginWidget>,
     message_container: AsyncConnector<MessageContainerWidget>,
@@ -24,7 +32,7 @@ pub struct App {
 #[relm4::component(pub async)]
 impl AsyncComponent for App {
     type Init = ();
-    type Input = ();
+    type Input = AppActions;
     type Output = ();
     type CommandOutput = ();
 
@@ -72,7 +80,7 @@ impl AsyncComponent for App {
 
                 #[name = "stack"]
                 adw::ViewStack {
-                    add_titled_with_icon: (model.login.widget(), Some("login"), "Login", "padlock2-symbolic"),
+                    // add_titled_with_icon: (model.login.widget(), Some("login"), "Login", "padlock2-symbolic"),
                     // add_titled_with_icon: (model.message_container.widget(), Some("messages"), "Messages", "chat-bubble-text-symbolic"),
                 },
 
@@ -125,8 +133,10 @@ impl AsyncComponent for App {
     async fn init(
         _init: Self::Init,
         root: Self::Root,
-        _sender: AsyncComponentSender<Self>,
+        sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        // Main
+
         let login = LoginWidget::builder().launch(());
         let message_container = MessageContainerWidget::builder().launch(());
 
@@ -138,12 +148,7 @@ impl AsyncComponent for App {
 
         let widgets: AppWidgets = view_output!();
 
-        widgets
-            .sidebar_button
-            .bind_property("active", model.message_container.widget(), "reveal-flap")
-            .flags(glib::BindingFlags::SYNC_CREATE)
-            .flags(gtk::glib::BindingFlags::BIDIRECTIONAL)
-            .build();
+        // Actions
 
         let actions = RelmActionGroup::<WindowActionGroup>::new();
 
@@ -159,12 +164,18 @@ impl AsyncComponent for App {
                 sender.send(()).unwrap_or_default();
             })
         };
-
         actions.add_action(&about_action);
 
-        widgets.switcher_bar.set_stack(Some(&widgets.stack));
+        // Stack
 
+        sender
+            .input_sender()
+            .send(Self::Input::ViewStackLoggedOut)
+            .unwrap(); // TODO: Log back in automatically (Token stored in SQLite)
+        widgets.switcher_bar.set_stack(Some(&widgets.stack));
         widgets.switcher_title.set_stack(Some(&widgets.stack));
+
+        // Binding
 
         widgets
             .switcher_title
@@ -173,10 +184,48 @@ impl AsyncComponent for App {
             .build();
 
         widgets
+            .sidebar_button
+            .bind_property("active", model.message_container.widget(), "reveal-flap")
+            .flags(glib::BindingFlags::SYNC_CREATE)
+            .flags(gtk::glib::BindingFlags::BIDIRECTIONAL)
+            .build();
+
+        // Etc
+
+        widgets
             .main_window
             .insert_action_group(WindowActionGroup::NAME, Some(&actions.into_action_group()));
 
         AsyncComponentParts { model, widgets }
+    }
+
+    async fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        msg: Self::Input,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            Self::Input::ViewStackLoggedIn => {
+                widgets.stack.remove(self.login.widget());
+                widgets.stack.add_titled_with_icon(
+                    self.message_container.widget(),
+                    Some("messages"),
+                    "Messages",
+                    "chat-bubble-text-symbolic",
+                );
+            }
+            Self::Input::ViewStackLoggedOut => {
+                widgets.stack.add_titled_with_icon(
+                    self.login.widget(),
+                    Some("login"),
+                    "Login",
+                    "padlock2-symbolic",
+                );
+                widgets.stack.remove(self.message_container.widget());
+            }
+        }
     }
 }
 

@@ -1,11 +1,9 @@
-mod widgets;
-mod services;
 mod models;
+mod services;
+mod widgets;
 
-use std::sync::{Mutex, Arc};
-
-use relm4::RelmApp;
 use dotenv::dotenv;
+use relm4::RelmApp;
 
 use widgets::app::App;
 

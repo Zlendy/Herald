@@ -2,12 +2,13 @@ use std::env;
 
 use adw::traits::PreferencesRowExt;
 use gtk::prelude::*;
-use relm4::adw;
+use relm4::{adw, WidgetRef};
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
     gtk, RelmWidgetExt,
 };
 
+use crate::widgets::app::AppActions;
 use crate::{models::gotify::client::CreateClientEnum, services::gotify::GotifyService};
 
 pub struct LoginWidget {
@@ -52,6 +53,7 @@ impl AsyncComponent for LoginWidget {
 
                 adw::EntryRow {
                     set_title: "Username",
+                    set_text: model.username.as_str(),
                     connect_changed[sender] => move |entry| {
                         let text = entry.text().to_string();
                         sender.input(LoginMsg::SetUsername(text));
@@ -60,6 +62,7 @@ impl AsyncComponent for LoginWidget {
 
                 adw::PasswordEntryRow {
                     set_title: "Password",
+                    set_text: model.password.as_str(),
                     connect_changed[sender] => move |entry| {
                         let text = entry.text().to_string();
                         sender.input(LoginMsg::SetPassword(text));
@@ -89,8 +92,8 @@ impl AsyncComponent for LoginWidget {
     async fn update_cmd(
         &mut self,
         msg: LoginMsg,
-        _sender: AsyncComponentSender<Self>,
-        _root: &Self::Root,
+        sender: AsyncComponentSender<Self>,
+        root: &Self::Root,
     ) {
         if msg != LoginMsg::Login {
             return;
@@ -108,6 +111,9 @@ impl AsyncComponent for LoginWidget {
             CreateClientEnum::Success(model) => match model.token {
                 Some(token) => {
                     self.token = token;
+                    // let window = root.toplevel_window().unwrap().widget_ref().to_owned();
+                    // sender.input_sender()
+                    // sender.input(message)
                 }
                 None => {
                     log::error!("Token is None");
@@ -150,8 +156,8 @@ impl AsyncComponent for LoginWidget {
         let model = LoginWidget {
             current_section: 1,
             server_url: env::var("BASE_URL").unwrap_or_default(),
-            username: "".to_string(),
-            password: "".to_string(),
+            username: env::var("USERNAME").unwrap_or_default(),
+            password: env::var("PASSWORD").unwrap_or_default(),
             token: "".to_string(),
         };
 

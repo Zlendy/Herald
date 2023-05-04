@@ -5,6 +5,6 @@ pub struct VersionInfoModel {
     pub version: String,
     pub commit: String,
 
-    #[serde(rename = "BuildDate")]
+    #[serde(rename = "buildDate")]
     pub build_date: String,
 }

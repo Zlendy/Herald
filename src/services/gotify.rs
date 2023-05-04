@@ -74,6 +74,8 @@ impl GotifyService {
         let response = request.send().await?;
         let json = response.json::<Value>().await?;
 
+        log::debug!("set_base_url: {}", json.clone());
+
         match serde_json::from_value::<VersionInfoModel>(json.clone()) {
             Ok(model) => {
                 log::info!("Found Gotify server version {}.", model.version);
@@ -81,7 +83,7 @@ impl GotifyService {
                 return Ok(model);
             }
             Err(error) => {
-                log::error!("No Gotify instance was found.");
+                log::error!("No Gotify instance was found: {}", error);
                 return Err(Box::new(error));
             }
         }
@@ -107,7 +109,7 @@ impl GotifyService {
         let status = response.status();
         let value = &response.json::<Value>().await.unwrap();
 
-        log::debug!("{}", value);
+        log::debug!("create_client: {}", value);
 
         if status.is_client_error() {
             let model: ErrorModel = serde_json::from_value(value.clone()).unwrap();
