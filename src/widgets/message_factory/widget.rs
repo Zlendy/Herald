@@ -1,13 +1,15 @@
-use std::time::Duration;
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
+use relm4::component::{AsyncComponent, AsyncComponentParts};
+use std::time::Duration;
 
 use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
 };
 use relm4::loading_widgets::LoadingWidgets;
-use relm4::{gtk, view, ComponentParts, ComponentSender, RelmWidgetExt, SimpleComponent};
+use relm4::{gtk, view, AsyncComponentSender, RelmWidgetExt};
 
 use crate::models::gotify::message::MessageModel;
+use crate::services::gotify::GotifyService;
 
 #[derive(Debug)]
 pub enum MessageComponentOutput {
@@ -66,7 +68,7 @@ impl AsyncFactoryComponent for MessageModel {
                             }
                         },
                     },
-                    
+
                     gtk::Label {
                         set_can_focus: false,
                         set_wrap: true,
@@ -131,13 +133,16 @@ pub enum FactoryMsg {
     AddMessageBack(MessageModel),
     RemoveMessage,
     Remove(DynamicIndex),
+    RemoveLocalMessages,
+    SetMessages,
 }
 
-#[relm4::component(pub)]
-impl SimpleComponent for MessageFactory {
+#[relm4::component(pub async)]
+impl AsyncComponent for MessageFactory {
     type Init = MessageModel;
     type Input = FactoryMsg;
     type Output = ();
+    type CommandOutput = ();
 
     view! {
         gtk::Box {
@@ -172,11 +177,11 @@ impl SimpleComponent for MessageFactory {
         }
     }
 
-    fn init(
+    async fn init(
         default_widget: Self::Init,
-        root: &Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        root: Self::Root,
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let messages = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
 
         let model = MessageFactory {
@@ -187,10 +192,15 @@ impl SimpleComponent for MessageFactory {
         let message_box = model.messages.widget();
         let widgets = view_output!();
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        msg: Self::Input,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         let mut guard = self.messages.guard();
         match msg {
             FactoryMsg::AddDefaultMessage => {
@@ -209,7 +219,32 @@ impl SimpleComponent for MessageFactory {
                 };
 
                 log::info!("Requested deletion of message with id {}", model.id);
+                let response = GotifyService::instance().delete_message(model.id).await;
+
+                let Ok(result) = response else { // There was an error in the request
+                    return;
+                };
+
+                if result.is_some() && result.unwrap().error_code != 404 {
+                    // Requested ID does not exist on the server (it is safe to delete the entry locally)
+                    return;
+                }
+
                 guard.remove(index.current_index());
+            }
+            FactoryMsg::RemoveLocalMessages => {
+                guard.clear();
+            }
+            FactoryMsg::SetMessages => {
+                let Ok(paged_messages) = GotifyService::instance().get_messages().await else {
+                    return;
+                };
+
+                sender.input(FactoryMsg::RemoveLocalMessages);
+                for message in paged_messages.messages {
+                    log::debug!("{:#?}", message);
+                    sender.input(FactoryMsg::AddMessageBack(message));
+                }
             }
         }
     }

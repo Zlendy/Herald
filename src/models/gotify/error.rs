@@ -1,13 +1,13 @@
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ErrorModel {
     pub error: String,
 
-    #[serde(rename="errorCode")]
+    #[serde(rename = "errorCode")]
     pub error_code: i64,
 
-    #[serde(rename="errorDescription")]
+    #[serde(rename = "errorDescription")]
     pub error_descripton: String,
 }
 

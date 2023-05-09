@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use lazy_static::lazy_static;
-use reqwest::{Method, RequestBuilder};
+use reqwest::{Method, RequestBuilder, Response};
 use serde_json::Value;
 
 use crate::models::gotify::{
@@ -50,14 +50,18 @@ impl GotifyService {
     }
 
     #[allow(dead_code)]
-    async fn request_auth(&self, method: Method, path: String) -> Value {
+    async fn request_auth(&self, method: Method, path: String) -> Response {
         let token = self.token.clone().unwrap_or("".to_string());
 
         let client = self
             .request_builder(method, path)
             .header("X-Gotify-Key", token);
 
-        client.send().await.unwrap().json::<Value>().await.unwrap()
+        client.send().await.unwrap()
+    }
+
+    async fn get_json_value(&self, response: Response) -> Value {
+        response.json::<Value>().await.unwrap()
     }
 
     pub fn instance() -> MutexGuard<'static, GotifyService> {
@@ -131,6 +135,7 @@ impl GotifyService {
 
     pub async fn get_messages(&self) -> Result<PagedMessagesModel, Box<dyn std::error::Error>> {
         let value = self.request_auth(Method::GET, "/message".to_string()).await;
+        let value = self.get_json_value(value).await;
 
         log::debug!("{}", value);
 
@@ -141,6 +146,37 @@ impl GotifyService {
             }
             Err(err) => {
                 log::error!("get_messages: {}", err);
+                return Err(Box::new(err));
+            }
+        }
+    }
+
+    pub async fn delete_message(
+        &self,
+        id: i64,
+    ) -> Result<Option<ErrorModel>, Box<dyn std::error::Error>> {
+        let response = self
+            .request_auth(Method::DELETE, format!("/message/{}", id))
+            .await;
+
+        // log::debug!("Response: {:#?}", response);
+
+        if response.status().is_success() {
+            log::info!("Deleted message {}", id);
+            return Ok(None);
+        }
+
+        let value = self.get_json_value(response).await;
+
+        log::debug!("{}", value);
+
+        match serde_json::from_value::<ErrorModel>(value) {
+            Ok(model) => {
+                log::error!("delete_message: {:?}", model);
+                return Ok(Some(model));
+            }
+            Err(err) => {
+                log::error!("delete_message: {}", err);
                 return Err(Box::new(err));
             }
         }

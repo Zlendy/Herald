@@ -1,20 +1,21 @@
 use crate::models::gotify::message::MessageModel;
-use crate::services::gotify::GotifyService;
+
 use crate::widgets::message_factory::widget::{FactoryMsg, MessageFactory};
 use adw::{gtk::ListBoxRow, traits::PreferencesRowExt};
 use gtk::prelude::*;
+use relm4::component::{AsyncComponentController, AsyncConnector};
 use relm4::gtk;
 use relm4::{
     adw,
-    component::{AsyncComponent, AsyncComponentParts, Connector},
+    component::{AsyncComponent, AsyncComponentParts},
     factory::FactoryView,
-    AsyncComponentSender, Component, ComponentController,
+    AsyncComponentSender,
 };
 
 pub struct MessageContainerWidget {
     #[allow(dead_code)]
     current_section: u32,
-    factory: Connector<MessageFactory>,
+    factory: AsyncConnector<MessageFactory>,
 }
 
 #[derive(Debug)]
@@ -112,15 +113,7 @@ impl AsyncComponent for MessageContainerWidget {
             Self::Input::SelectRow(row) => {
                 log::info!("Select Row: \"{}\"", row.index());
             }
-            Self::Input::LoadMessages => match GotifyService::instance().get_messages().await {
-                Ok(paged_messages) => {
-                    for message in paged_messages.messages {
-                        log::debug!("{:#?}", message);
-                        self.factory.emit(FactoryMsg::AddMessageBack(message));
-                    }
-                }
-                Err(_) => {}
-            },
+            Self::Input::LoadMessages => self.factory.emit(FactoryMsg::SetMessages),
         }
     }
 }
