@@ -1,9 +1,9 @@
 use dotenv::dotenv;
 use std::env;
 
+use herald::widgets::message::factory::models::MessageModel;
 use serde_json::value::from_value;
 use serde_json::Value;
-use herald::widgets::message_factory::models::MessageModel;
 
 use lazy_static::lazy_static;
 
@@ -22,7 +22,8 @@ async fn main() {
     println!("\n-- Message list --");
     let messages = get_messages().await.unwrap();
     // println!("{:#?}", &messages);
-    let message_vec: Vec<MessageModel> = serde_json::from_str(&messages["messages"].to_string()).unwrap();
+    let message_vec: Vec<MessageModel> =
+        serde_json::from_str(&messages["messages"].to_string()).unwrap();
     println!("{:#?}", &message_vec);
 
     // println!("\n-- Message list from third application --");

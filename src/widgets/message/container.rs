@@ -1,6 +1,6 @@
 use crate::models::gotify::message::MessageModel;
 
-use crate::widgets::message_factory::widget::{FactoryMsg, MessageFactory};
+use crate::widgets::message::factory::{FactoryMsg, MessageFactory};
 use adw::{gtk::ListBoxRow, traits::PreferencesRowExt};
 use gtk::prelude::*;
 use relm4::component::{AsyncComponentController, AsyncConnector};

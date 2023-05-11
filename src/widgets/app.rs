@@ -1,6 +1,6 @@
 use crate::widgets::about_dialog::AboutDialog;
 use crate::widgets::login::widget::LoginWidget;
-use crate::widgets::message_container::widget::{MessageContainerSignals, MessageContainerWidget};
+use crate::widgets::message::container::{MessageContainerSignals, MessageContainerWidget};
 
 use adw::{glib, Toast, Window};
 use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};
