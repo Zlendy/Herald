@@ -1,6 +1,6 @@
 use crate::models::gotify::message::MessageModel;
 
-use crate::widgets::message::factory::{FactoryMsg, MessageFactory};
+use super::factory::{FactoryMsg, MessageFactory};
 use adw::{gtk::ListBoxRow, traits::PreferencesRowExt};
 use gtk::prelude::*;
 use relm4::component::{AsyncComponentController, AsyncConnector};
@@ -98,6 +98,12 @@ impl AsyncComponent for MessageContainerWidget {
         let widgets = view_output!();
 
         widgets.content.factory_append(model.factory.widget(), &());
+
+        let show_sender = sender.input_sender().to_owned();
+        root.connect_show(move |_test| {
+            log::info!("SHOWN"); // TODO: Refresh data from server
+            show_sender.emit(MessageContainerSignals::LoadMessages);
+        });
 
         AsyncComponentParts { model, widgets }
     }

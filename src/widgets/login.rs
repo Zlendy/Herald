@@ -6,7 +6,7 @@ use gtk::prelude::*;
 use relm4::adw;
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts, AsyncComponentSender},
-    gtk, RelmWidgetExt,
+    gtk,
 };
 
 use crate::widgets::app::GlobalActions;
@@ -79,13 +79,6 @@ impl AsyncComponent for LoginWidget {
                         })
                     },
                 },
-
-
-                gtk::Label {
-                    set_margin_all: 5,
-                    #[watch]
-                    set_label: &format!("Token: \"{}\"", model.token),
-                },
             },
         }
     }
@@ -118,7 +111,7 @@ impl AsyncComponent for LoginWidget {
                     //     .send(GlobalActions::ViewStackLoggedIn)
                     //     .unwrap();
 
-                    sender.output_sender().emit(GlobalActions::LogIn);
+                    sender.output_sender().emit(GlobalActions::LoggedIn);
                     // sender.input_sender()
                     // sender.input(message)
                 }

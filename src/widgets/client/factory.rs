@@ -1,5 +1,6 @@
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 use relm4::component::{AsyncComponent, AsyncComponentParts};
+use std::time::Duration;
 
 use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
@@ -7,19 +8,19 @@ use relm4::factory::{
 use relm4::loading_widgets::LoadingWidgets;
 use relm4::{gtk, view, AsyncComponentSender, RelmWidgetExt};
 
-use crate::models::gotify::message::MessageModel;
+use crate::models::gotify::client::ClientModel;
 use crate::services::gotify::GotifyService;
 
 #[derive(Debug)]
-pub enum MessageComponentOutput {
+pub enum ClientModelOutput {
     Remove(DynamicIndex),
 }
 
 #[relm4::factory(pub async)]
-impl AsyncFactoryComponent for MessageModel {
-    type Init = MessageModel;
+impl AsyncFactoryComponent for ClientModel {
+    type Init = ClientModel;
     type Input = ();
-    type Output = MessageComponentOutput;
+    type Output = ClientModelOutput;
     type CommandOutput = ();
     type ParentInput = FactoryMsg;
     type ParentWidget = gtk::Box;
@@ -46,24 +47,24 @@ impl AsyncFactoryComponent for MessageModel {
                             set_halign: gtk::Align::Start,
 
                             set_use_markup: true,
-                            set_markup: {
-                                let value = match &self.title {
-                                    Some(title) => {
-                                        title
-                                    }
-                                    None => {
-                                        ""
-                                    }
-                                };
+                            // set_markup: {
+                            //     let value = match &self.title {
+                            //         Some(title) => {
+                            //             title
+                            //         }
+                            //         None => {
+                            //             ""
+                            //         }
+                            //     };
 
-                                format!("<b>{value}</b>").as_str() // TODO: Sanitize input
-                            }
+                            //     format!("<b>{value}</b>").as_str() // TODO: Sanitize input
+                            // }
                         },
 
                         gtk::Button {
                             set_icon_name: "user-trash-symbolic",
                             connect_clicked[sender, index] => move |_| {
-                                sender.output(MessageComponentOutput::Remove(index.clone()))
+                                sender.output(ClientModelOutput::Remove(index.clone()))
                             }
                         },
                     },
@@ -73,7 +74,7 @@ impl AsyncFactoryComponent for MessageModel {
                         set_wrap: true,
                         set_halign: gtk::Align::Start,
 
-                        set_text: &self.message,
+                        // set_text: &self.message,
                     },
                 },
             },
@@ -102,7 +103,7 @@ impl AsyncFactoryComponent for MessageModel {
 
     fn output_to_parent_input(output: Self::Output) -> Option<FactoryMsg> {
         Some(match output {
-            MessageComponentOutput::Remove(index) => FactoryMsg::Remove(index),
+            ClientModelOutput::Remove(index) => FactoryMsg::Remove(index),
         })
     }
 
@@ -111,34 +112,34 @@ impl AsyncFactoryComponent for MessageModel {
         _index: &DynamicIndex,
         _sender: AsyncFactorySender<Self>,
     ) -> Self {
-        // tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
         // Self { title: init.title.clone(), content: init.content.clone() }
         init
     }
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        log::debug!("Message with id {} was destroyed", self.id);
+        // log::debug!("Message with id {} was destroyed", self.id);
     }
 }
 
-pub struct MessageFactory {
-    default_widget: MessageModel,
-    messages: AsyncFactoryVecDeque<MessageModel>,
+pub struct ClientFactory {
+    default_widget: ClientModel,
+    messages: AsyncFactoryVecDeque<ClientModel>,
 }
 
 #[derive(Debug)]
 pub enum FactoryMsg {
     AddDefaultMessage,
-    AddMessageBack(MessageModel),
+    AddRowBack(ClientModel),
     RemoveMessage,
     Remove(DynamicIndex),
     RemoveLocalMessages,
-    SetMessages,
+    SetData,
 }
 
 #[relm4::component(pub async)]
-impl AsyncComponent for MessageFactory {
-    type Init = MessageModel;
+impl AsyncComponent for ClientFactory {
+    type Init = ClientModel;
     type Input = FactoryMsg;
     type Output = ();
     type CommandOutput = ();
@@ -183,7 +184,7 @@ impl AsyncComponent for MessageFactory {
     ) -> AsyncComponentParts<Self> {
         let messages = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
 
-        let model = MessageFactory {
+        let model = ClientFactory {
             default_widget,
             messages,
         };
@@ -205,45 +206,44 @@ impl AsyncComponent for MessageFactory {
             FactoryMsg::AddDefaultMessage => {
                 guard.push_front(self.default_widget.clone());
             }
-            FactoryMsg::AddMessageBack(model) => {
+            FactoryMsg::AddRowBack(model) => {
                 guard.push_back(model);
             }
             FactoryMsg::RemoveMessage => {
                 guard.pop_front();
             }
             FactoryMsg::Remove(index) => {
-                let Some(model) = guard.get(index.current_index()) else {
-                    log::error!("Message with index {} not found", index.current_index());
-                    return;
-                };
+                // let Some(model) = guard.get(index.current_index()) else {
+                //     log::error!("Message with index {} not found", index.current_index());
+                //     return;
+                // };
 
-                log::info!("Requested deletion of message with id {}", model.id);
-                let response = GotifyService::instance().delete_message(model.id).await;
+                // log::info!("Requested deletion of message with id {}", model.id);
+                // let response = GotifyService::instance().delete_message(model.id).await;
 
-                let Ok(result) = response else { // There was an error in the request
-                    return;
-                };
+                // let Ok(result) = response else { // There was an error in the request
+                //     return;
+                // };
 
-                if result.is_some() && result.unwrap().error_code != 404 {
-                    // Requested ID does not exist on the server (it is safe to delete the entry locally)
-                    return;
-                }
+                // if result.is_some() && result.unwrap().error_code != 404 {
+                //     // Requested ID does not exist on the server (it is safe to delete the entry locally)
+                //     return;
+                // }
 
-                guard.remove(index.current_index());
+                // guard.remove(index.current_index());
             }
             FactoryMsg::RemoveLocalMessages => {
-                // NOTE: This is prone to panicking if it is called twice in a short time span
                 guard.clear();
             }
-            FactoryMsg::SetMessages => {
-                let Ok(paged_messages) = GotifyService::instance().get_messages().await else {
+            FactoryMsg::SetData => {
+                let Ok(clients) = GotifyService::instance().get_clients().await else {
                     return;
                 };
 
                 sender.input(FactoryMsg::RemoveLocalMessages);
-                for message in paged_messages.messages {
-                    log::debug!("{:#?}", message);
-                    sender.input(FactoryMsg::AddMessageBack(message));
+                for client in clients {
+                    log::debug!("{:#?}", client);
+                    sender.input(FactoryMsg::AddRowBack(client));
                 }
             }
         }

@@ -19,6 +19,7 @@ lazy_static! {
 pub struct GotifyService {
     pub base_url: Option<String>,
     pub token: Option<String>,
+    pub client: Option<ClientModel>,
 }
 
 impl GotifyService {
@@ -26,6 +27,7 @@ impl GotifyService {
         Self {
             base_url: None,
             token: None,
+            client: None,
         }
     }
 
@@ -131,6 +133,56 @@ impl GotifyService {
         }
 
         CreateClientEnum::Unmatched(value.clone())
+    }
+
+    pub async fn get_clients(&self) -> Result<Vec<ClientModel>, Box<dyn std::error::Error>> {
+        let value = self.request_auth(Method::GET, "/client".to_string()).await;
+        let value = self.get_json_value(value).await;
+
+        log::debug!("{}", value);
+
+        match serde_json::from_value::<Vec<ClientModel>>(value) {
+            Ok(clients) => {
+                log::info!("Retrieved clients");
+                return Ok(clients);
+            }
+            Err(err) => {
+                log::error!("get_clients: {}", err);
+                return Err(Box::new(err));
+            }
+        }
+    }
+
+    pub async fn delete_client(
+        // TODO: Merge with delete_message
+        &self,
+        id: i64,
+    ) -> Result<Option<ErrorModel>, Box<dyn std::error::Error>> {
+        let response = self
+            .request_auth(Method::DELETE, format!("/client/{}", id))
+            .await;
+
+        // log::debug!("Response: {:#?}", response);
+
+        if response.status().is_success() {
+            log::info!("Deleted client {}", id);
+            return Ok(None);
+        }
+
+        let value = self.get_json_value(response).await;
+
+        log::debug!("{}", value);
+
+        match serde_json::from_value::<ErrorModel>(value) {
+            Ok(model) => {
+                log::error!("delete_client: {:?}", model);
+                return Ok(Some(model));
+            }
+            Err(err) => {
+                log::error!("delete_client: {}", err);
+                return Err(Box::new(err));
+            }
+        }
     }
 
     pub async fn get_messages(&self) -> Result<PagedMessagesModel, Box<dyn std::error::Error>> {

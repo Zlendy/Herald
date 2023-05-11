@@ -1,6 +1,7 @@
-use crate::widgets::about_dialog::AboutDialog;
-use crate::widgets::login::LoginWidget;
-use crate::widgets::message::container::{MessageContainerSignals, MessageContainerWidget};
+use super::about_dialog::AboutDialog;
+use super::client::container::ClientContainerWidget;
+use super::login::LoginWidget;
+use super::message::container::MessageContainerWidget;
 
 use adw::{glib, Toast, Window};
 use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};
@@ -14,14 +15,15 @@ use relm4::{component::AsyncComponent, gtk};
 
 #[derive(Debug)]
 pub enum GlobalActions {
-    LogIn,
-    LogOut,
+    LoggedIn,
+    LoggedOut,
     ShowToast(Toast),
 }
 
 pub struct App {
     login: AsyncController<LoginWidget>,
     message_container: AsyncConnector<MessageContainerWidget>,
+    client_container: AsyncConnector<ClientContainerWidget>,
     about_dialog: Option<Controller<AboutDialog>>,
 }
 
@@ -140,6 +142,7 @@ impl Component for App {
 
         let login = LoginWidget::builder().launch(());
         let message_container = MessageContainerWidget::builder().launch(());
+        let client_container = ClientContainerWidget::builder().launch(());
 
         let input_sender = sender.input_sender().to_owned();
         let login_controller = login.connect_receiver(move |_, message| {
@@ -149,6 +152,7 @@ impl Component for App {
         let mut model = App {
             login: login_controller,
             message_container,
+            client_container,
             about_dialog: None,
         };
 
@@ -194,9 +198,16 @@ impl Component for App {
 
         // Events
 
-        sender.input(Self::Input::LogOut); // TODO: Log back in automatically (Token stored in SQLite)
+        sender.input(Self::Input::LoggedOut); // TODO: Log back in automatically (Token stored in SQLite)
 
         // Etc
+
+        widgets.stack.connect_visible_child_notify(|stack| {
+            let visible = stack.visible_child().unwrap();
+            let name = stack.visible_child_name().unwrap();
+            log::info!("Visible: {} ({})", name, visible);
+            visible.emit_by_name("show", &[])
+        });
 
         widgets
             .main_window
@@ -213,22 +224,25 @@ impl Component for App {
         _root: &Self::Root,
     ) {
         match msg {
-            GlobalActions::LogIn => {
+            GlobalActions::LoggedIn => {
                 log::info!("Logged in.");
 
                 widgets.stack.remove(self.login.widget());
+
                 widgets.stack.add_titled_with_icon(
                     self.message_container.widget(),
                     Some("messages"),
                     "Messages",
                     "chat-bubble-text-symbolic",
                 );
-
-                self.message_container
-                    .sender()
-                    .emit(MessageContainerSignals::LoadMessages);
+                widgets.stack.add_titled_with_icon(
+                    self.client_container.widget(),
+                    Some("clients"),
+                    "Clients",
+                    "phonelink2-symbolic",
+                );
             }
-            GlobalActions::LogOut => {
+            GlobalActions::LoggedOut => {
                 log::info!("Logged out.");
 
                 widgets.stack.add_titled_with_icon(
@@ -237,7 +251,9 @@ impl Component for App {
                     "Login",
                     "padlock2-symbolic",
                 );
+
                 widgets.stack.remove(self.message_container.widget());
+                widgets.stack.remove(self.client_container.widget());
             }
             GlobalActions::ShowToast(toast) => {
                 widgets.toast_overlay.add_toast(&toast);

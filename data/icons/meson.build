@@ -14,9 +14,10 @@ install_data(
 
 action_dir = join_paths('hicolor', 'scalable', 'actions')
 action_icons = [
-    # each icon must be registered here
-    join_paths(action_dir, 'chat-bubble-text-symbolic.svg'),
-    join_paths(action_dir, 'padlock2-symbolic.svg'),
+  # each icon must be registered here
+  join_paths(action_dir, 'chat-bubble-text-symbolic.svg'),
+  join_paths(action_dir, 'padlock2-symbolic.svg'),
+  join_paths(action_dir, 'phonelink2-symbolic.svg'),
 ]
 
 install_data(
