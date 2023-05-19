@@ -1,3 +1,4 @@
+use adw::prelude::ListBoxRowExt;
 use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
 use relm4::component::{AsyncComponent, AsyncComponentParts};
 
@@ -5,7 +6,7 @@ use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
 };
 use relm4::loading_widgets::LoadingWidgets;
-use relm4::{gtk, view, AsyncComponentSender, RelmWidgetExt};
+use relm4::{adw, gtk, AsyncComponentSender, RelmWidgetExt};
 
 use crate::models::gotify::message::MessageModel;
 use crate::services::gotify::GotifyService;
@@ -22,16 +23,17 @@ impl AsyncFactoryComponent for MessageModel {
     type Output = MessageComponentOutput;
     type CommandOutput = ();
     type ParentInput = FactoryMsg;
-    type ParentWidget = gtk::Box;
+    type ParentWidget = adw::PreferencesPage;
 
     view! {
-        root = gtk::Box {
+        root = adw::PreferencesGroup {
             set_halign: gtk::Align::Fill,
             set_hexpand: true,
-            set_homogeneous: true,
+            // set_homogeneous: true,
 
-            gtk::ListBoxRow {
-                gtk::Box {
+            adw::PreferencesRow {
+                #[wrap(Some)]
+                set_child = &gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
 
                     gtk::Box {
@@ -78,26 +80,6 @@ impl AsyncFactoryComponent for MessageModel {
                 },
             },
         }
-    }
-
-    fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
-        view! {
-            #[local_ref]
-            root {
-                set_orientation: gtk::Orientation::Horizontal,
-                set_spacing: 10,
-
-                #[name(spinner)]
-                gtk::Spinner {
-                    start: (),
-                    set_hexpand: true,
-                    set_halign: gtk::Align::Center,
-                    // Reserve vertical space
-                    set_height_request: 34,
-                }
-            }
-        }
-        Some(LoadingWidgets::new(root, spinner))
     }
 
     fn output_to_parent_input(output: Self::Output) -> Option<FactoryMsg> {
@@ -167,9 +149,9 @@ impl AsyncComponent for MessageFactory {
                     set_vexpand: true,
 
                     #[local_ref]
-                    message_box -> gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_spacing: 5,
+                    message_box -> adw::PreferencesPage {
+                        // set_orientation: gtk::Orientation::Vertical,
+                        // set_spacing: 5,
                     }
                 }
             }
@@ -181,7 +163,8 @@ impl AsyncComponent for MessageFactory {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
-        let messages = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
+        let messages =
+            AsyncFactoryVecDeque::new(adw::PreferencesPage::default(), sender.input_sender());
 
         let model = MessageFactory {
             default_widget,

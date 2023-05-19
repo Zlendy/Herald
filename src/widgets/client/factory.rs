@@ -1,12 +1,13 @@
-use gtk::prelude::{BoxExt, ButtonExt, OrientableExt, WidgetExt};
+use adw::traits::PreferencesRowExt;
+use gtk::prelude::*;
+use libadwaita::prelude::EditableExt;
 use relm4::component::{AsyncComponent, AsyncComponentParts};
-use std::time::Duration;
 
 use relm4::factory::{
     AsyncFactoryComponent, AsyncFactorySender, AsyncFactoryVecDeque, DynamicIndex,
 };
-use relm4::loading_widgets::LoadingWidgets;
-use relm4::{gtk, view, AsyncComponentSender, RelmWidgetExt};
+
+use relm4::{adw, gtk, AsyncComponentSender, RelmWidgetExt};
 
 use crate::models::gotify::client::ClientModel;
 use crate::services::gotify::GotifyService;
@@ -22,88 +23,51 @@ impl AsyncFactoryComponent for ClientModel {
     type Input = ();
     type Output = ClientModelOutput;
     type CommandOutput = ();
-    type ParentInput = FactoryMsg;
-    type ParentWidget = gtk::Box;
+    type ParentInput = FactorySignal;
+    type ParentWidget = adw::PreferencesPage; //gtk::Box;
 
     view! {
-        root = gtk::Box {
-            set_halign: gtk::Align::Fill,
-            set_hexpand: true,
-            set_homogeneous: true,
+        root = adw::PreferencesGroup {
+            // adw::PreferencesRow {
+            //     #[wrap(Some)]
+            //     set_child = &gtk::Label {
+            //         set_text: &self.name,
+            //     }
+            // },
+            adw::EntryRow {
+                set_title: "Name",
+                set_text: &self.name
 
-            gtk::ListBoxRow {
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
+            },
+            adw::PasswordEntryRow {
+                set_title: "Token",
+                set_text: &self.token.to_owned().unwrap_or_default(),
+                set_editable: false,
 
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Horizontal,
-                        set_hexpand: true,
+            },
+            adw::PreferencesRow {
+                #[wrap(Some)]
+                set_child = &gtk::Box {
+                    set_homogeneous: true,
 
-                        gtk::Label {
-                            set_can_focus: false,
-                            set_wrap: true,
-                            set_hexpand: true,
-
-                            set_halign: gtk::Align::Start,
-
-                            set_use_markup: true,
-                            // set_markup: {
-                            //     let value = match &self.title {
-                            //         Some(title) => {
-                            //             title
-                            //         }
-                            //         None => {
-                            //             ""
-                            //         }
-                            //     };
-
-                            //     format!("<b>{value}</b>").as_str() // TODO: Sanitize input
-                            // }
-                        },
-
-                        gtk::Button {
-                            set_icon_name: "user-trash-symbolic",
-                            connect_clicked[sender, index] => move |_| {
-                                sender.output(ClientModelOutput::Remove(index.clone()))
-                            }
-                        },
+                    gtk::Button {
+                        set_label: "Save",
                     },
-
-                    gtk::Label {
-                        set_can_focus: false,
-                        set_wrap: true,
-                        set_halign: gtk::Align::Start,
-
-                        // set_text: &self.message,
+                    gtk::Button {
+                        set_label: "Copy token",
                     },
-                },
+                    gtk::Button {
+                        set_label: "Delete",
+                    }
+                }
             },
         }
+
     }
 
-    fn init_loading_widgets(root: &mut Self::Root) -> Option<LoadingWidgets> {
-        view! {
-            #[local_ref]
-            root {
-                set_orientation: gtk::Orientation::Horizontal,
-                set_spacing: 10,
-
-                #[name(spinner)]
-                gtk::Spinner {
-                    start: (),
-                    set_hexpand: true,
-                    set_halign: gtk::Align::Center,
-                    // Reserve vertical space
-                    set_height_request: 34,
-                }
-            }
-        }
-        Some(LoadingWidgets::new(root, spinner))
-    }
-
-    fn output_to_parent_input(output: Self::Output) -> Option<FactoryMsg> {
+    fn output_to_parent_input(output: Self::Output) -> Option<FactorySignal> {
         Some(match output {
-            ClientModelOutput::Remove(index) => FactoryMsg::Remove(index),
+            ClientModelOutput::Remove(index) => FactorySignal::Remove(index),
         })
     }
 
@@ -112,7 +76,7 @@ impl AsyncFactoryComponent for ClientModel {
         _index: &DynamicIndex,
         _sender: AsyncFactorySender<Self>,
     ) -> Self {
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        // tokio::time::sleep(Duration::from_secs(1)).await;
         // Self { title: init.title.clone(), content: init.content.clone() }
         init
     }
@@ -128,19 +92,18 @@ pub struct ClientFactory {
 }
 
 #[derive(Debug)]
-pub enum FactoryMsg {
-    AddDefaultMessage,
-    AddRowBack(ClientModel),
-    RemoveMessage,
+pub enum FactorySignal {
+    PushDefault,
+    PushBack(ClientModel),
     Remove(DynamicIndex),
-    RemoveLocalMessages,
+    ClearLocalData,
     SetData,
 }
 
 #[relm4::component(pub async)]
 impl AsyncComponent for ClientFactory {
     type Init = ClientModel;
-    type Input = FactoryMsg;
+    type Input = FactorySignal;
     type Output = ();
     type CommandOutput = ();
 
@@ -155,22 +118,17 @@ impl AsyncComponent for ClientFactory {
                 set_margin_all: 5,
 
                 gtk::Button {
-                    set_label: "Add test notification",
-                    connect_clicked => FactoryMsg::AddDefaultMessage,
-                },
-
-                gtk::Button {
-                    set_label: "Remove test notification",
-                    connect_clicked => FactoryMsg::RemoveMessage,
+                    set_label: "Create client (TODO)",
+                    connect_clicked => FactorySignal::PushDefault,
                 },
 
                 gtk::ScrolledWindow {
                     set_vexpand: true,
 
                     #[local_ref]
-                    message_box -> gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_spacing: 5,
+                    message_box -> adw::PreferencesPage {
+                        // set_orientation: gtk::Orientation::Vertical,
+                        // set_spacing: 5,
                     }
                 }
             }
@@ -182,7 +140,8 @@ impl AsyncComponent for ClientFactory {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
-        let messages = AsyncFactoryVecDeque::new(gtk::Box::default(), sender.input_sender());
+        let messages =
+            AsyncFactoryVecDeque::new(adw::PreferencesPage::default(), sender.input_sender());
 
         let model = ClientFactory {
             default_widget,
@@ -203,16 +162,13 @@ impl AsyncComponent for ClientFactory {
     ) {
         let mut guard = self.messages.guard();
         match msg {
-            FactoryMsg::AddDefaultMessage => {
+            FactorySignal::PushDefault => {
                 guard.push_front(self.default_widget.clone());
             }
-            FactoryMsg::AddRowBack(model) => {
+            FactorySignal::PushBack(model) => {
                 guard.push_back(model);
             }
-            FactoryMsg::RemoveMessage => {
-                guard.pop_front();
-            }
-            FactoryMsg::Remove(index) => {
+            FactorySignal::Remove(index) => {
                 // let Some(model) = guard.get(index.current_index()) else {
                 //     log::error!("Message with index {} not found", index.current_index());
                 //     return;
@@ -232,18 +188,18 @@ impl AsyncComponent for ClientFactory {
 
                 // guard.remove(index.current_index());
             }
-            FactoryMsg::RemoveLocalMessages => {
+            FactorySignal::ClearLocalData => {
                 guard.clear();
             }
-            FactoryMsg::SetData => {
+            FactorySignal::SetData => {
                 let Ok(clients) = GotifyService::instance().get_clients().await else {
                     return;
                 };
 
-                sender.input(FactoryMsg::RemoveLocalMessages);
+                sender.input(FactorySignal::ClearLocalData);
                 for client in clients {
                     log::debug!("{:#?}", client);
-                    sender.input(FactoryMsg::AddRowBack(client));
+                    sender.input(FactorySignal::PushBack(client));
                 }
             }
         }

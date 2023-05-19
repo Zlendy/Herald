@@ -1,7 +1,7 @@
 use std::env;
 
 use adw::builders::ToastBuilder;
-use adw::traits::PreferencesRowExt;
+use adw::traits::{PreferencesPageExt, PreferencesRowExt};
 use gtk::prelude::*;
 use relm4::adw;
 use relm4::{
@@ -39,47 +39,52 @@ impl AsyncComponent for LoginWidget {
 
     view! {
         adw::Clamp {
-            gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                set_hexpand: true,
+            adw::PreferencesPage {
+                add = &adw::PreferencesGroup {
+                    set_hexpand: true,
 
-                adw::EntryRow {
-                    set_title: "Server URL",
-                    set_text: model.server_url.as_str(),
-                    connect_changed[sender] => move |entry| {
-                        let text = entry.text().to_string();
-                        sender.input(LoginMsg::SetServerUrl(text));
+                    adw::EntryRow {
+                        set_title: "Server URL",
+                        set_text: model.server_url.as_str(),
+                        connect_changed[sender] => move |entry| {
+                            let text = entry.text().to_string();
+                            sender.input(LoginMsg::SetServerUrl(text));
+                        },
                     },
-                },
 
-                adw::EntryRow {
-                    set_title: "Username",
-                    set_text: model.username.as_str(),
-                    connect_changed[sender] => move |entry| {
-                        let text = entry.text().to_string();
-                        sender.input(LoginMsg::SetUsername(text));
+                    adw::EntryRow {
+                        set_title: "Username",
+                        set_text: model.username.as_str(),
+                        connect_changed[sender] => move |entry| {
+                            let text = entry.text().to_string();
+                            sender.input(LoginMsg::SetUsername(text));
+                        },
                     },
-                },
 
-                adw::PasswordEntryRow {
-                    set_title: "Password",
-                    set_text: model.password.as_str(),
-                    connect_changed[sender] => move |entry| {
-                        let text = entry.text().to_string();
-                        sender.input(LoginMsg::SetPassword(text));
+                    adw::PasswordEntryRow {
+                        set_title: "Password",
+                        set_text: model.password.as_str(),
+                        connect_changed[sender] => move |entry| {
+                            let text = entry.text().to_string();
+                            sender.input(LoginMsg::SetPassword(text));
+                        },
                     },
-                },
 
-                gtk::Button {
-                    set_label: "Login",
+                    adw::PreferencesRow {
 
-                    connect_clicked[sender] => move |_| {
-                        sender.oneshot_command(async move {
-                            LoginMsg::Login
-                        })
-                    },
+                        #[wrap(Some)]
+                        set_child = &gtk::Button {
+                            set_label: "Login",
+
+                            connect_clicked[sender] => move |_| {
+                                sender.oneshot_command(async move {
+                                    LoginMsg::Login
+                                })
+                            },
+                        },
+                    }
                 },
-            },
+            }
         }
     }
 

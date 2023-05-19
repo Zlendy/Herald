@@ -1,7 +1,7 @@
 use crate::models::gotify::client::ClientModel;
 use crate::services::gotify::GotifyService;
 
-use super::factory::{ClientFactory, FactoryMsg};
+use super::factory::{ClientFactory, FactorySignal};
 use adw::{gtk::ListBoxRow, traits::PreferencesRowExt};
 use gtk::prelude::*;
 use relm4::component::{AsyncComponentController, AsyncConnector};
@@ -86,7 +86,7 @@ impl AsyncComponent for ClientContainerWidget {
             Self::Input::SelectRow(row) => {
                 log::info!("Select Row: \"{}\"", row.index());
             }
-            Self::Input::LoadData => self.factory.emit(FactoryMsg::SetData),
+            Self::Input::LoadData => self.factory.emit(FactorySignal::SetData),
         }
     }
 
