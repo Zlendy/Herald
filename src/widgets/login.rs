@@ -98,7 +98,8 @@ impl AsyncComponent for LoginWidget {
             return;
         } // Only process "Login" events
 
-        let Ok(_) = GotifyService::instance().set_base_url(self.server_url.clone()).await else {
+        let server_url = self.server_url.clone();
+        let Ok(_) = GotifyService::instance().set_base_url(server_url).await else {
             return; // Stop code execution
         };
 
