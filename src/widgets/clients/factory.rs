@@ -130,10 +130,10 @@ impl AsyncComponent for ClientFactory {
                 set_spacing: 5,
                 set_margin_all: 5,
 
-                gtk::Button {
-                    set_label: "Create client (TODO)",
-                    connect_clicked => FactorySignal::PushDefault,
-                },
+                // gtk::Button {
+                //     set_label: "Create client (TODO)",
+                //     connect_clicked => FactorySignal::PushDefault,
+                // },
 
                 gtk::ScrolledWindow {
                     set_vexpand: true,

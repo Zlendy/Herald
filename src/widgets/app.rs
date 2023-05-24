@@ -1,7 +1,7 @@
 use super::about_dialog::AboutDialog;
-use super::client::container::ClientContainerWidget;
+use super::clients::container::ClientContainerWidget;
 use super::login::LoginWidget;
-use super::message::container::MessageContainerWidget;
+use super::messages::container::MessageContainerWidget;
 
 use adw::{glib, Toast, Window};
 use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};

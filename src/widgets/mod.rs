@@ -1,5 +1,5 @@
 pub mod about_dialog;
 pub mod app;
-pub mod client;
+pub mod clients;
 pub mod login;
-pub mod message;
+pub mod messages;

@@ -135,15 +135,15 @@ impl AsyncComponent for MessageFactory {
                 set_spacing: 5,
                 set_margin_all: 5,
 
-                gtk::Button {
-                    set_label: "Add test notification",
-                    connect_clicked => FactoryMsg::AddDefaultMessage,
-                },
+                // gtk::Button {
+                //     set_label: "Add test notification",
+                //     connect_clicked => FactoryMsg::AddDefaultMessage,
+                // },
 
-                gtk::Button {
-                    set_label: "Remove test notification",
-                    connect_clicked => FactoryMsg::RemoveMessage,
-                },
+                // gtk::Button {
+                //     set_label: "Remove test notification",
+                //     connect_clicked => FactoryMsg::RemoveMessage,
+                // },
 
                 gtk::ScrolledWindow {
                     set_vexpand: true,
