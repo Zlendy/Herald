@@ -3,6 +3,7 @@ use super::apps::container::AppsContainerWidget;
 use super::clients::container::ClientContainerWidget;
 use super::login::LoginWidget;
 use super::messages::container::MessageContainerWidget;
+use super::users::container::UsersContainerWidget;
 
 use adw::{glib, Toast, Window};
 use relm4::actions::{ActionGroupName, RelmAction, RelmActionGroup};
@@ -24,6 +25,7 @@ pub enum GlobalActions {
 pub struct App {
     login: AsyncController<LoginWidget>,
     message_container: AsyncConnector<MessageContainerWidget>,
+    users_container: AsyncConnector<UsersContainerWidget>,
     client_container: AsyncConnector<ClientContainerWidget>,
     apps_container: AsyncConnector<AppsContainerWidget>,
     about_dialog: Option<Controller<AboutDialog>>,
@@ -39,7 +41,7 @@ impl Component for App {
     view! {
         #[name = "main_window"]
         adw::Window {
-            set_default_size: (800, 300),
+            set_default_size: (800, 600),
             set_icon_name: Some("io.github.zlendy.herald"),
 
             gtk::Box {
@@ -144,6 +146,7 @@ impl Component for App {
 
         let login = LoginWidget::builder().launch(());
         let message_container = MessageContainerWidget::builder().launch(());
+        let users_container = UsersContainerWidget::builder().launch(());
         let client_container = ClientContainerWidget::builder().launch(());
         let apps_container = AppsContainerWidget::builder().launch(());
 
@@ -155,6 +158,7 @@ impl Component for App {
         let mut model = App {
             login: login_controller,
             message_container,
+            users_container,
             client_container,
             apps_container,
             about_dialog: None,
@@ -240,6 +244,12 @@ impl Component for App {
                     "chat-bubble-text-symbolic",
                 );
                 widgets.stack.add_titled_with_icon(
+                    self.users_container.widget(),
+                    Some("users"),
+                    "Users",
+                    "org.gnome.Settings-users-symbolic",
+                );
+                widgets.stack.add_titled_with_icon(
                     self.apps_container.widget(),
                     Some("apps"),
                     "Apps",
@@ -263,6 +273,7 @@ impl Component for App {
                 );
 
                 widgets.stack.remove(self.message_container.widget());
+                widgets.stack.remove(self.users_container.widget());
                 widgets.stack.remove(self.apps_container.widget());
                 widgets.stack.remove(self.client_container.widget());
             }

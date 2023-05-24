@@ -9,6 +9,7 @@ use crate::models::gotify::{
     client::{ClientModel, CreateClientEnum},
     error::ErrorModel,
     paged_messages::PagedMessagesModel,
+    user::UserModel,
     version_info::VersionInfoModel,
 };
 
@@ -169,6 +170,24 @@ impl GotifyService {
             }
             Err(err) => {
                 log::error!("get_apps: {}", err);
+                return Err(Box::new(err));
+            }
+        }
+    }
+
+    pub async fn get_users(&self) -> Result<Vec<UserModel>, Box<dyn std::error::Error>> {
+        let value = self.request_auth(Method::GET, "/user".to_string()).await;
+        let value = self.get_json_value(value).await;
+
+        log::debug!("{}", value);
+
+        match serde_json::from_value::<Vec<UserModel>>(value) {
+            Ok(users) => {
+                log::info!("Retrieved users");
+                return Ok(users);
+            }
+            Err(err) => {
+                log::error!("get_users: {}", err);
                 return Err(Box::new(err));
             }
         }
