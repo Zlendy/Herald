@@ -1,4 +1,5 @@
 use super::about_dialog::AboutDialog;
+use super::apps::container::AppsContainerWidget;
 use super::clients::container::ClientContainerWidget;
 use super::login::LoginWidget;
 use super::messages::container::MessageContainerWidget;
@@ -24,6 +25,7 @@ pub struct App {
     login: AsyncController<LoginWidget>,
     message_container: AsyncConnector<MessageContainerWidget>,
     client_container: AsyncConnector<ClientContainerWidget>,
+    apps_container: AsyncConnector<AppsContainerWidget>,
     about_dialog: Option<Controller<AboutDialog>>,
 }
 
@@ -143,6 +145,7 @@ impl Component for App {
         let login = LoginWidget::builder().launch(());
         let message_container = MessageContainerWidget::builder().launch(());
         let client_container = ClientContainerWidget::builder().launch(());
+        let apps_container = AppsContainerWidget::builder().launch(());
 
         let input_sender = sender.input_sender().to_owned();
         let login_controller = login.connect_receiver(move |_, message| {
@@ -153,6 +156,7 @@ impl Component for App {
             login: login_controller,
             message_container,
             client_container,
+            apps_container,
             about_dialog: None,
         };
 
@@ -236,6 +240,12 @@ impl Component for App {
                     "chat-bubble-text-symbolic",
                 );
                 widgets.stack.add_titled_with_icon(
+                    self.apps_container.widget(),
+                    Some("apps"),
+                    "Apps",
+                    "user-available-symbolic",
+                );
+                widgets.stack.add_titled_with_icon(
                     self.client_container.widget(),
                     Some("clients"),
                     "Clients",
@@ -253,6 +263,7 @@ impl Component for App {
                 );
 
                 widgets.stack.remove(self.message_container.widget());
+                widgets.stack.remove(self.apps_container.widget());
                 widgets.stack.remove(self.client_container.widget());
             }
             GlobalActions::ShowToast(toast) => {

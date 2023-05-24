@@ -9,7 +9,7 @@ use relm4::{
     gtk,
 };
 
-use crate::widgets::app::GlobalActions;
+use crate::widgets::root::GlobalActions;
 use crate::{models::gotify::client::CreateClientEnum, services::gotify::GotifyService};
 
 pub struct LoginWidget {

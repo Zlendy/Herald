@@ -1,5 +1,6 @@
 pub mod about_dialog;
-pub mod app;
+pub mod root;
 pub mod clients;
 pub mod login;
 pub mod messages;
+pub mod apps;

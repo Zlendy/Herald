@@ -5,7 +5,7 @@ mod widgets;
 use dotenv::dotenv;
 use relm4::RelmApp;
 
-use widgets::app::App;
+use widgets::root::App;
 
 fn main() {
     env_logger::init();

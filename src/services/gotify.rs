@@ -5,6 +5,7 @@ use reqwest::{Method, RequestBuilder, Response};
 use serde_json::Value;
 
 use crate::models::gotify::{
+    application::ApplicationModel,
     client::{ClientModel, CreateClientEnum},
     error::ErrorModel,
     paged_messages::PagedMessagesModel,
@@ -148,6 +149,26 @@ impl GotifyService {
             }
             Err(err) => {
                 log::error!("get_clients: {}", err);
+                return Err(Box::new(err));
+            }
+        }
+    }
+
+    pub async fn get_apps(&self) -> Result<Vec<ApplicationModel>, Box<dyn std::error::Error>> {
+        let value = self
+            .request_auth(Method::GET, "/application".to_string())
+            .await;
+        let value = self.get_json_value(value).await;
+
+        log::debug!("{}", value);
+
+        match serde_json::from_value::<Vec<ApplicationModel>>(value) {
+            Ok(apps) => {
+                log::info!("Retrieved applications");
+                return Ok(apps);
+            }
+            Err(err) => {
+                log::error!("get_apps: {}", err);
                 return Err(Box::new(err));
             }
         }
