@@ -1,4 +1,5 @@
 use adw::traits::PreferencesRowExt;
+use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use gtk::prelude::*;
 use libadwaita::prelude::EditableExt;
 use relm4::component::{AsyncComponent, AsyncComponentParts};
@@ -55,6 +56,18 @@ impl AsyncFactoryComponent for ClientModel {
                     },
                     gtk::Button {
                         set_label: "Copy token",
+                    //     connect_clicked => move |_| {
+                    //         let mut ctx = ClipboardContext::new().unwrap();
+                    //         match &self.token {
+                    //             Some(token) => {
+                    //                 ctx.set_contents(token.to_owned()).unwrap();
+                    //             },
+                    //             None => {
+                    //                 log::error!("Could not copy to clipboard! Token is empty.");
+                    //             }
+                    //         }
+
+                    //     },
                     },
                     gtk::Button {
                         set_label: "Delete",
